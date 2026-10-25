@@ -12,7 +12,7 @@ erDiagram
     PATIENT ||--o{ APPOINTMENT : "books"
     PATIENT ||--o{ ENCOUNTER : "attends"
     PATIENT ||--o{ NEXT_OF_KIN : "has"
-    PATIENT }o--|| NEXT_OF_KIN : "primary contact"
+    PATIENT }o--o| NEXT_OF_KIN : "primary contact"
 
     DEPARTMENT ||--o{ DOCTOR : "employs"
     DOCTOR ||--o{ APPOINTMENT : "attends"
@@ -40,9 +40,9 @@ erDiagram
         timestamp created_at
     }
 
-    PATIENT {
-        uuid next_of_kin_id PK
-        uuid patient_id FK
+    NEXT_OF_KIN {
+        uuid   next_of_kin_id PK
+        uuid   patient_id FK
         string full_name
         string relationship
         string phone
