@@ -8,18 +8,22 @@
 -- A 20-row table produces an identical plan with or without an index, which
 -- makes the optimisation work in P2 impossible to demonstrate.
 --
--- Volumes produced (verified by running the script):
+-- Volumes produced (approximate; verified by running the script):
 --   departments   10        patients        500
 --   staff         60        doctor_profile   50
 --   wards          6        beds             60
 --   schedules    250        appointments   5,700
 --   encounters   4,470     vitals         4,470
---   diagnoses    6,652     prescriptions  8,940
---   lab_orders   6,652     lab_results   11,877
---   admissions      72     audit_log     15,140
+--   admissions      72     audit_log    ~15,000
+--   diagnoses   ~6,650     prescriptions  8,940
+--   lab_orders  ~6,650     lab_results  ~11,800
 --
--- Deterministic: every row is derived from a series index, so re-running against
--- a fresh database produces identical data. No random() is used.
+-- Structure is fixed: reference tables, appointments, encounters, vitals and
+-- prescriptions produce exactly the same counts on every run. The four tables
+-- selected using a hash of a UUID (next_of_kin, diagnosis, lab_order,
+-- lab_result) vary by a few per cent between runs, because primary keys are
+-- generated randomly. The counts are still the same order of magnitude, which is
+-- what matters for query plans.
 --
 -- Execution order: schema.sql, then seed-data.sql, against an EMPTY database.
 -- ============================================================================

@@ -56,6 +56,22 @@ if [ "$ready" -eq 1 ]; then pass "accepting connections"; else fail "not ready a
 
 q() { docker compose exec -T postgres psql -U portfolio -d hospital -tAc "$1" 2>/dev/null | tr -d '\r'; }
 
+# The entrypoint runs the init scripts against a temporary server, then restarts.
+# "Ready" therefore does not mean "initialised"; wait for the data itself.
+settled=0
+for _ in $(seq 1 100); do
+    t=$(q "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")
+    p=$(q "SELECT count(*) FROM patient;")
+    if [ "$t" = "21" ] && [ "${p:-0}" -ge 500 ] 2>/dev/null; then settled=1; break; fi
+    sleep 3
+done
+if [ "$settled" -eq 1 ]; then
+    pass "initialisation complete (schema and seed data present)"
+else
+    fail "initialisation did not complete within 5 minutes"
+    fail "inspect with: docker compose logs postgres"
+fi
+
 section "Schema"
 tables=$(q "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")
 if [ "$tables" = "21" ]; then pass "21 base tables present"; else fail "found '$tables' tables, expected 21"; fi
@@ -85,13 +101,13 @@ check_exact doctor_profile 50
 check_exact doctor_schedule 250
 
 check_min patient 500
-check_min next_of_kin 308
+check_min next_of_kin 280
 check_min appointment 5700
 check_min encounter 4470
-check_min diagnosis 6652
+check_min diagnosis 6400
 check_min prescription 8940
-check_min lab_order 6652
-check_min lab_result 11877
+check_min lab_order 6400
+check_min lab_result 11000
 
 section "MongoDB"
 if [ "$MONGO_RUNNING" -ne 1 ]; then

@@ -38,9 +38,13 @@
 
 ```
 patient 500 · staff 60 · doctor_profile 50 · appointment 5,700
-encounter 4,470 · diagnosis 6,652 · prescription 8,940
-lab_order 6,652 · lab_result 11,877 · audit_log 15,140
+encounter 4,470 · prescription 8,940 · vitals 4,470
+diagnosis ~6,650 · lab_order ~6,650 · lab_result ~11,800 · audit_log ~15,000
 ```
+
+Reference tables, appointments, encounters and prescriptions give identical counts on
+every run. The four hash-selected tables vary by a few per cent, because primary keys are
+random UUIDs and row selection hashes them.
 
 Reproduce from scratch:
 

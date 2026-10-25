@@ -105,6 +105,28 @@ function Query([string]$sql) {
     return ($out -join "`n").Trim()
 }
 
+# The PostgreSQL entrypoint starts a temporary server to run the init scripts, then
+# stops it and starts the real one. Both accept connections, so "ready" is not the
+# same as "initialised". Wait until the expected schema and data actually exist
+# instead of trusting the first successful connection.
+$deadline = (Get-Date).AddMinutes(5)
+$settled = $false
+while ((Get-Date) -lt $deadline) {
+    try {
+        $t = Query "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"
+        $p = Query "SELECT count(*) FROM patient;"
+        if ($t -eq '21' -and [int]$p -ge 500) { $settled = $true; break }
+    } catch { }
+    Start-Sleep -Seconds 3
+}
+
+if (-not $settled) {
+    Fail "initialisation did not complete within 5 minutes"
+    Fail "inspect with: docker compose logs postgres"
+} else {
+    Pass "initialisation complete (schema and seed data present)"
+}
+
 # ----------------------------------------------------------------------------
 # 3. Schema initialised
 # ----------------------------------------------------------------------------
@@ -141,14 +163,14 @@ $exact = [ordered]@{
 }
 
 $atLeast = [ordered]@{
-    patient     = 500
-    next_of_kin = 308
-    appointment = 5700
-    encounter   = 4470
-    diagnosis   = 6652
+    patient      = 500
+    next_of_kin  = 280
+    appointment  = 5700
+    encounter    = 4470
+    diagnosis    = 6400
     prescription = 8940
-    lab_order   = 6652
-    lab_result  = 11877
+    lab_order    = 6400
+    lab_result   = 11000
 }
 
 try {
