@@ -29,3 +29,6 @@ mongodata/
 # Transient outputs (keep logs and screenshots, they are evidence)
 *.tmp
 tmp/
+
+# Course material downloaded for reference; not part of the submitted work
+ca_material/

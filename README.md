@@ -127,6 +127,58 @@ docker compose down -v && docker compose up -d
 
 Connect with `psql -h localhost -U portfolio -d hospital` or `mongosh`.
 
+### Confirming It Finished
+
+`docker compose up -d` returns as soon as the containers start. PostgreSQL then runs
+`schema.sql` and `seed-data.sql` on first boot, which takes a few more seconds. Three ways
+to confirm, in increasing order of confidence:
+
+**1. Container status**
+
+```bash
+docker compose ps
+```
+
+Both services should show `Up (healthy)`. If `portfolio-postgres` is missing entirely,
+the images are still downloading — no containers exist until the pull completes.
+
+**2. Init script output**
+
+```bash
+docker compose logs -f postgres
+```
+
+You are waiting for `database system is ready to accept connections`, preceded by a stream
+of `CREATE TABLE`, `INSERT 0 …` lines and the row-count table printed at the end of
+`seed-data.sql`.
+
+**3. The verification script** — the authoritative answer
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1
+```
+
+```bash
+bash scripts/verify.sh          # macOS / Linux / WSL / Git Bash
+```
+
+It checks container state, PostgreSQL readiness, that all 21 tables and the exclusion
+constraint exist, that seed row counts match, and that MongoDB responds to an
+authenticated ping. Exit code `0` means the environment is ready.
+
+### If the Init Script Failed
+
+A partially-initialised volume is worse than none: the entrypoint skips init whenever the
+data directory is non-empty, so a failure leaves you with a half-built database that looks
+healthy. Always rebuild the volume rather than retrying:
+
+```bash
+docker compose down -v
+docker compose up -d
+```
+
+The `-v` is the important part — it deletes the volume.
+
 ---
 
 ## Evidence Standard
@@ -144,6 +196,43 @@ Every claim in this repository must be backed by output that was actually produc
 
 See [`docs/ai-use-declaration.md`](docs/ai-use-declaration.md). This file is updated as
 the portfolio develops, not reconstructed at the end.
+
+---
+
+## Publishing to GitHub
+
+The brief requires a **private** repository that the assessor can read *before*
+submission (p.4 and p.7). A private repo that nobody can open scores zero on the
+documentation criterion, so treat the collaborator invite as part of the submission.
+
+```bash
+# 1. Create an empty PRIVATE repository on github.com — do not add a README,
+#    .gitignore or licence, because this repository already has them.
+
+# 2. Point this repository at it
+git remote add origin https://github.com/<your-username>/advanced-database-portfolio.git
+git branch -M main
+git push -u origin main
+
+# 3. Verify the push
+git remote -v
+```
+
+Then, in the repository on github.com:
+
+1. **Settings → Collaborators → Add people** — invite the assessor's account.
+2. Confirm the link works from a signed-out or private browser window. If it asks for a
+   login you do not have, the assessor will see a 404.
+3. Check the commit graph under **Insights → Contributors**; it should show work spread
+   over the semester, not one spike.
+
+Once pushed, every subsequent session ends with:
+
+```bash
+git add -A
+git commit -m "feat(p2): add baseline execution plans"
+git push
+```
 
 ---
 
