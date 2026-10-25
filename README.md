@@ -9,31 +9,41 @@
 
 ## Case Study
 
-**Organisation / scenario:** _<e.g. St. Mary's Teaching Hospital — result management system>_
+**Organisation / scenario:** Riverbend Teaching Hospital — a simulated 500-bed tertiary
+teaching hospital operating outpatient, inpatient and laboratory services.
 
-**Nature of the system:** A hospital records system supporting patient registration,
-appointment scheduling, clinical encounters, prescriptions and laboratory results.
+**Nature of the system:** A clinical records system supporting patient registration,
+appointment scheduling, clinical encounters, prescriptions, admissions and laboratory
+results.
 
 **Users of the database:**
 
 | User | Interaction |
 |---|---|
 | Receptionist | Registers patients, books/reschedules appointments |
-| Doctor | Records encounters, issues prescriptions, orders lab tests |
+| Triage nurse | Records vitals, updates appointment status |
+| Doctor | Records encounters, diagnoses, prescriptions, lab orders |
 | Lab technician | Records lab results against ordered tests |
-| Administrator | Manages staff, departments, reference data |
-| Auditor | Read-only access to the full history for compliance review |
+| Pharmacist | Dispenses against active prescriptions |
+| Ward clerk | Manages admissions, transfers and discharges |
+| Records officer | Corrects records, handles merges |
+| Administrator | Manages reference data |
+| Auditor | Read-only access to the append-only audit log |
 
-**Major data stored:** patients, next-of-kin, doctors, departments, appointments,
-encounters, diagnoses, prescriptions, lab tests and results, audit log.
+**Major data stored:** patients, next of kin, staff, doctors, departments, wards, beds,
+appointments, encounters, admissions, vitals, diagnoses, prescriptions, laboratory tests
+and results, and an append-only audit log.
 
 **Key operations the database must support:**
 
-1. Register a patient and book an appointment without double-booking a doctor.
-2. Record an encounter with diagnosis and prescriptions in one atomic unit.
-3. Order a lab test and attach results when available.
-4. Retrieve a patient's full medical history in chronological order.
-5. Produce department-level workload and turnaround reports.
+1. Register a patient and issue a medical record number.
+2. Book an appointment without double-booking a doctor, even under concurrent access.
+3. Record an encounter — vitals, diagnosis and prescriptions — as one atomic unit.
+4. Order a laboratory test and attach results with reference ranges and flags.
+5. Retrieve a patient's full clinical history across all care settings.
+6. Admit, transfer and discharge an inpatient.
+7. Produce operational reports — doctor workload, lab turnaround, ward occupancy.
+8. Audit all access to and changes of clinical records.
 
 > Full description and design justification: [`docs/case-study.md`](docs/case-study.md)
 
@@ -43,7 +53,7 @@ encounters, diagnoses, prescriptions, lab tests and results, audit log.
 
 | # | Component | Marks | Directory | Status |
 |---|---|---|---|---|
-| 1 | Database Design and Modelling | 7 | [`portfolio-1-database-design/`](portfolio-1-database-design/) | _pending_ |
+| 1 | Database Design and Modelling | 7 | [`portfolio-1-database-design/`](portfolio-1-database-design/) | complete |
 | 2 | Query Processing and Optimisation | 7 | [`portfolio-2-query-optimisation/`](portfolio-2-query-optimisation/) | _pending_ |
 | 3 | Transactions and Concurrency | 7 | [`portfolio-3-transactions-concurrency/`](portfolio-3-transactions-concurrency/) | _pending_ |
 | 4 | NoSQL and Advanced Data Models | 7 | [`portfolio-4-nosql/`](portfolio-4-nosql/) | _pending_ |
@@ -63,11 +73,13 @@ advanced-database-portfolio/
 │   ├── ai-use-declaration.md  <- AI tool disclosure (required, p.7)
 │   └── screenshots/
 ├── portfolio-1-database-design/
-│   ├── schema.sql             <- DDL: tables, keys, constraints
-│   ├── seed-data.sql          <- realistic sample data (drives P2, P3, P4)
-│   ├── er-diagram.md          <- Mermaid source, renders on GitHub
-│   ├── er-diagram.png         <- exported image for the LMS document
-│   └── normalisation.md       <- 1NF -> 3NF justification
+│   ├── schema.sql                     <- DDL: 21 relations, keys, constraints, triggers
+│   ├── seed-data.sql                  <- deterministic sample data (drives P2, P3, P4)
+│   ├── er-diagram.md                  <- Mermaid source, renders on GitHub
+│   ├── er-diagram.png                 <- exported image for the LMS document
+│   ├── normalisation.md               <- 1NF -> 3NF justification + design decisions
+│   ├── constraint-tests.sql           <- 10 statements that must all fail
+│   └── constraint-tests-output.txt    <- captured proof they do
 ├── portfolio-2-query-optimisation/
 │   ├── queries.sql            <- the business queries
 │   ├── indexes.sql            <- indexes added to improve them

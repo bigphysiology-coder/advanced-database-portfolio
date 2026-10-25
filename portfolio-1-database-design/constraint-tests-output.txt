@@ -1,0 +1,16 @@
+﻿CREATE FUNCTION
+
+Portfolio 1 ÔÇö constraint verification
+=====================================
+PASS  T01 double booking                 [23P01] conflicting key value violates exclusion constraint "no_double_booking"
+PASS  T02 second primary diagnosis       [23505] duplicate key value violates unique constraint "one_primary_diagnosis_per_encounter"
+PASS  T03 malformed MRN                  [23514] new row for relation "patient" violates check constraint "patient_mrn_format"
+PASS  T04 delete from audit log          [42501] audit_log is append-only; DELETE is not permitted
+PASS  T05 update audit log               [42501] audit_log is append-only; UPDATE is not permitted
+PASS  T06 doctor profile for a nurse     [23514] staff 6dd2f7c6-39de-403a-b06c-380a47f1e201 does not have the DOCTOR role
+PASS  T07 impossible temperature         [23514] new row for relation "vitals" violates check constraint "vitals_temperature"
+PASS  T08 lab result with no value       [23514] new row for relation "lab_result" violates check constraint "lab_result_value_present"
+PASS  T09 cancel without timestamp       [23514] new row for relation "appointment" violates check constraint "appointment_cancelled_consistency"
+PASS  T10 two active admissions          [23505] duplicate key value violates unique constraint "one_active_admission_per_bed"
+DROP FUNCTION
+

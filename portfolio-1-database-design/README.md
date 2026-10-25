@@ -15,11 +15,38 @@
 
 | File | Purpose |
 |---|---|
-| `schema.sql` | DDL — tables, types, keys, constraints, indexes |
-| `seed-data.sql` | Realistic sample data. Everything downstream depends on this. |
+| `schema.sql` | DDL — 21 relations, types, keys, constraints, indexes |
+| `seed-data.sql` | Deterministic sample data. Everything downstream depends on this. |
 | `er-diagram.md` | Mermaid ER diagram (renders on GitHub) |
-| `er-diagram.png` | Exported image for the LMS document |
-| `normalisation.md` | Step-by-step normalisation justification |
+| `er-diagram.png` | Exported image for the LMS document — _not yet produced_ |
+| `normalisation.md` | Step-by-step normalisation justification and design decisions |
+| `constraint-tests.sql` | Ten statements that must all fail, proving the constraints work |
+| `constraint-tests-output.txt` | Raw output from the run above |
+
+## Status
+
+- [x] Case study description
+- [x] Relational schema (21 relations)
+- [x] Keys: primary, foreign, candidate, alternate, composite
+- [x] Constraints: NOT NULL, UNIQUE, CHECK, FOREIGN KEY, EXCLUDE, triggers
+- [x] Normalisation explanation (1NF → 3NF) with justified denormalisation
+- [x] Seed data at a volume that makes query plans meaningful
+- [x] Constraint verification with captured output
+- [ ] ER diagram exported to PNG
+
+## Verified Row Counts
+
+```
+patient 500 · staff 60 · doctor_profile 50 · appointment 5,700
+encounter 4,470 · diagnosis 6,652 · prescription 8,940
+lab_order 6,652 · lab_result 11,877 · audit_log 15,140
+```
+
+Reproduce from scratch:
+
+```bash
+docker compose down -v && docker compose up -d
+```
 
 ## Design Decisions to Record
 
