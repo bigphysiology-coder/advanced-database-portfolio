@@ -113,10 +113,17 @@ Requires Docker Desktop.
 docker compose up -d
 ```
 
-| Service | Port | Credentials |
-|---|---|---|
-| PostgreSQL 16 | 5432 | `portfolio` / `portfolio` |
-| MongoDB 7 | 27017 | `portfolio` / `portfolio` |
+To start only what you need — Portfolio 1 and 2 do not use MongoDB, and skipping its
+~300 MB image is worthwhile on a slow connection:
+
+```bash
+docker compose up -d postgres
+```
+
+| Service | Port | Credentials | Needed from |
+|---|---|---|---|
+| PostgreSQL 16 | 5432 | `portfolio` / `portfolio` | Portfolio 1 |
+| MongoDB 7 | 27017 | `portfolio` / `portfolio` | Portfolio 4 |
 
 On first boot PostgreSQL executes `schema.sql` then `seed-data.sql` automatically.
 To rebuild from scratch after changing either file:
@@ -124,6 +131,32 @@ To rebuild from scratch after changing either file:
 ```bash
 docker compose down -v && docker compose up -d
 ```
+
+### If the Image Pull Fails
+
+A `short read ... unexpected EOF` during a pull is a dropped connection, not a bad
+configuration. Docker discards the incomplete layer and needs to fetch it again.
+
+```bash
+docker compose pull          # shows per-layer progress, unlike up -d
+docker compose up -d postgres
+```
+
+Completed layers are cached, so a retry re-downloads only the layer that failed.
+
+If it fails repeatedly, reduce parallel connections and raise the retry count in
+**Docker Desktop → Settings → Docker Engine**:
+
+```json
+{
+  "max-concurrent-downloads": 2,
+  "max-download-attempts": 10
+}
+```
+
+Apply and restart. Fewer parallel streams is slower in theory but far more reliable on a
+congested link. Also confirm there is room on disk — both images need about 2 GB once
+unpacked.
 
 Connect with `psql -h localhost -U portfolio -d hospital` or `mongosh`.
 

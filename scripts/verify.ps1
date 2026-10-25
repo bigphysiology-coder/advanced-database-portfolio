@@ -46,15 +46,26 @@ function Get-ContainerState([string]$name) {
     }
 }
 
-foreach ($svc in @('portfolio-postgres', 'portfolio-mongodb')) {
-    $state = Get-ContainerState $svc
-    if ($null -eq $state) {
-        Fail "$svc does not exist. Run: docker compose up -d"
-    } elseif ($state -ne 'running') {
-        Fail "$svc is '$state', expected 'running'. Check: docker compose logs $svc"
-    } else {
-        Pass "$svc is running"
-    }
+$postgresState = Get-ContainerState 'portfolio-postgres'
+if ($null -eq $postgresState) {
+    Fail "portfolio-postgres does not exist. Run: docker compose up -d postgres"
+} elseif ($postgresState -ne 'running') {
+    Fail "portfolio-postgres is '$postgresState'. Check: docker compose logs postgres"
+} else {
+    Pass "portfolio-postgres is running"
+}
+
+# MongoDB is only needed from Portfolio 4 onwards, and its image is ~300 MB.
+# Not running it is a warning, not a failure.
+$script:mongoRunning = $false
+$mongoState = Get-ContainerState 'portfolio-mongodb'
+if ($null -eq $mongoState) {
+    Warn "portfolio-mongodb not started (needed from Portfolio 4). Start: docker compose up -d mongodb"
+} elseif ($mongoState -ne 'running') {
+    Warn "portfolio-mongodb is '$mongoState'"
+} else {
+    Pass "portfolio-mongodb is running"
+    $script:mongoRunning = $true
 }
 
 if ($script:failures -gt 0) {
@@ -160,15 +171,19 @@ try {
 # ----------------------------------------------------------------------------
 Section "MongoDB"
 
-try {
-    $ok = docker compose exec -T mongodb mongosh --quiet `
-            --username portfolio --password portfolio `
-            --authenticationDatabase admin `
-            --eval "db.adminCommand({ ping: 1 }).ok" 2>&1
-    if (("$ok".Trim()) -eq '1') { Pass "responding to authenticated ping" }
-    else { Fail "unexpected response: $ok" }
-} catch {
-    Fail "could not reach MongoDB: $_"
+if (-not $script:mongoRunning) {
+    Warn "skipped - container not running (required from Portfolio 4)"
+} else {
+    try {
+        $ok = docker compose exec -T mongodb mongosh --quiet `
+                --username portfolio --password portfolio `
+                --authenticationDatabase admin `
+                --eval "db.adminCommand({ ping: 1 }).ok" 2>&1
+        if (("$ok".Trim()) -eq '1') { Pass "responding to authenticated ping" }
+        else { Fail "unexpected response: $ok" }
+    } catch {
+        Fail "could not reach MongoDB: $_"
+    }
 }
 
 # ----------------------------------------------------------------------------

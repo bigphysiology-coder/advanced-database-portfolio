@@ -16,16 +16,26 @@ fail() { printf '  FAIL  %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 section() { printf '\n\033[36m%s\033[0m\n' "$1"; }
 
 section "Containers"
-for svc in portfolio-postgres portfolio-mongodb; do
-    state=$(docker inspect --format '{{.State.Status}}' "$svc" 2>/dev/null || echo missing)
-    if [ "$state" = "running" ]; then
-        pass "$svc is running"
-    elif [ "$state" = "missing" ]; then
-        fail "$svc does not exist. Run: docker compose up -d"
-    else
-        fail "$svc is '$state'. Check: docker compose logs $svc"
-    fi
-done
+pg_state=$(docker inspect --format '{{.State.Status}}' portfolio-postgres 2>/dev/null || echo missing)
+if [ "$pg_state" = "running" ]; then
+    pass "portfolio-postgres is running"
+elif [ "$pg_state" = "missing" ]; then
+    fail "portfolio-postgres does not exist. Run: docker compose up -d postgres"
+else
+    fail "portfolio-postgres is '$pg_state'. Check: docker compose logs postgres"
+fi
+
+# MongoDB is only needed from Portfolio 4 onwards; not running it is a warning.
+MONGO_RUNNING=0
+mongo_state=$(docker inspect --format '{{.State.Status}}' portfolio-mongodb 2>/dev/null || echo missing)
+if [ "$mongo_state" = "running" ]; then
+    pass "portfolio-mongodb is running"
+    MONGO_RUNNING=1
+elif [ "$mongo_state" = "missing" ]; then
+    printf '  WARN  portfolio-mongodb not started (needed from Portfolio 4). Start: docker compose up -d mongodb\n'
+else
+    printf '  WARN  portfolio-mongodb is %s\n' "$mongo_state"
+fi
 
 if [ "$FAILURES" -gt 0 ]; then
     section "Result"
@@ -84,11 +94,15 @@ check_min lab_order 6652
 check_min lab_result 11877
 
 section "MongoDB"
-mongo_ok=$(docker compose exec -T mongodb mongosh --quiet \
-    --username portfolio --password portfolio \
-    --authenticationDatabase admin \
-    --eval "db.adminCommand({ ping: 1 }).ok" 2>/dev/null | tr -d '\r')
-if [ "$mongo_ok" = "1" ]; then pass "responding to authenticated ping"; else fail "unexpected response: '$mongo_ok'"; fi
+if [ "$MONGO_RUNNING" -ne 1 ]; then
+    printf '  WARN  skipped - container not running (required from Portfolio 4)\n'
+else
+    mongo_ok=$(docker compose exec -T mongodb mongosh --quiet \
+        --username portfolio --password portfolio \
+        --authenticationDatabase admin \
+        --eval "db.adminCommand({ ping: 1 }).ok" 2>/dev/null | tr -d '\r')
+    if [ "$mongo_ok" = "1" ]; then pass "responding to authenticated ping"; else fail "unexpected response: '$mongo_ok'"; fi
+fi
 
 section "Result"
 if [ "$FAILURES" -eq 0 ]; then
