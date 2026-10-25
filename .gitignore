@@ -1,0 +1,31 @@
+# Environment / secrets
+.env
+.env.*
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node
+node_modules/
+package-lock.json
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Database dumps and local volumes
+*.dump
+*.backup
+pgdata/
+mongodata/
+
+# Transient outputs (keep logs and screenshots, they are evidence)
+*.tmp
+tmp/

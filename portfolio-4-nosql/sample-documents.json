@@ -1,0 +1,33 @@
+{
+  "_comment": "Replace with real documents exported from the running database. These are illustrative shapes only.",
+  "collection": "lab_results",
+  "database": "hospital_labs",
+  "documents": [
+    {
+      "order_id": "LAB-000001",
+      "patient_id": "PAT-00042",
+      "test_code": "LIPID",
+      "collected_at": "2026-03-14T08:15:00Z",
+      "reported_at": "2026-03-14T15:40:00Z",
+      "status": "REPORTED",
+      "results": [
+        { "analyte": "Total cholesterol", "value": 5.8, "unit": "mmol/L", "ref_low": 0, "ref_high": 5.0, "flag": "HIGH" },
+        { "analyte": "HDL", "value": 1.1, "unit": "mmol/L", "ref_low": 1.0, "ref_high": 2.0, "flag": "NORMAL" },
+        { "analyte": "LDL", "value": 3.9, "unit": "mmol/L", "ref_low": 0, "ref_high": 3.0, "flag": "HIGH" }
+      ]
+    },
+    {
+      "order_id": "LAB-000002",
+      "patient_id": "PAT-00042",
+      "test_code": "FBC",
+      "collected_at": "2026-03-14T08:20:00Z",
+      "reported_at": null,
+      "status": "IN_PROGRESS",
+      "results": [
+        { "analyte": "Haemoglobin", "value": 134, "unit": "g/L", "ref_low": 130, "ref_high": 175, "flag": "NORMAL" },
+        { "analyte": "WBC", "value": 11.2, "unit": "10^9/L", "ref_low": 4.0, "ref_high": 11.0, "flag": "HIGH" },
+        { "analyte": "Platelets", "value": 250, "unit": "10^9/L", "ref_low": 150, "ref_high": 400, "flag": "NORMAL" }
+      ]
+    }
+  ]
+}

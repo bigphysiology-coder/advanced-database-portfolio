@@ -1,0 +1,31 @@
+-- ============================================================================
+-- MIT 8103 Advanced Database Systems
+-- Portfolio 1: Database Design and Modelling
+-- Case study: <organisation> — hospital records system
+-- Target: PostgreSQL 16
+--
+-- Execution order: schema.sql, then seed-data.sql
+-- This file is idempotent and safe to re-run on an empty schema.
+-- ============================================================================
+
+-- TODO: schema definition
+--
+-- Suggested build order (respect FK dependencies):
+--   1. Reference / lookup tables      (departments, specialties, test_catalogue)
+--   2. Core entities                  (patients, next_of_kin, staff, doctors)
+--   3. Scheduling                     (appointments, rooms, availability)
+--   4. Clinical activity              (encounters, diagnoses, prescriptions)
+--   5. Laboratory                     (lab_orders, lab_results)
+--   6. Audit                          (audit_log / status history)
+--
+-- For each table, the DDL must demonstrate the P1 rubric items:
+--   [ ] Explicit primary keys
+--   [ ] Foreign keys with deliberate ON DELETE / ON UPDATE behaviour
+--   [ ] NOT NULL only where the business rule demands it
+--   [ ] CHECK constraints for domain rules (e.g. end_time > start_time,
+--       score ranges, valid status transitions)
+--   [ ] UNIQUE constraints where a business key exists (e.g. medical record number)
+--   [ ] Sensible data types (not TEXT for everything)
+--   [ ] COMMENT ON statements explaining non-obvious design choices
+--
+-- Leave a written justification in normalisation.md for every non-obvious choice.

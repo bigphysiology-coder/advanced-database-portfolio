@@ -1,0 +1,28 @@
+-- ============================================================================
+-- MIT 8103 Advanced Database Systems
+-- Portfolio 1: Seed data
+--
+-- Purpose: populate the schema with enough realistic data that Portfolio 2
+-- (execution plans) and Portfolio 3 (concurrency) produce meaningful results.
+--
+-- Target volumes — a 20-row table produces an identical plan with or without
+-- an index, which makes the optimisation work in P2 impossible to demonstrate:
+--
+--   departments        ~10
+--   staff / doctors    ~50
+--   patients           ~500
+--   appointments       ~5,000   (spread across 12 months)
+--   encounters         ~4,000
+--   prescriptions      ~8,000
+--   lab_orders         ~6,000
+--   lab_results        ~20,000
+--
+-- Generate programmatically (generate_series and randomised values) rather than
+-- hand-writing INSERT statements. Commit the generator script alongside the
+-- output so the data is reproducible.
+--
+--   examples/generate_seed.py  or  use generate_series() in pure SQL
+--
+-- ============================================================================
+
+-- TODO: seed data
