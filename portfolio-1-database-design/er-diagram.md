@@ -4,6 +4,8 @@ Source of truth for the entity-relationship model. Written in Mermaid so it rend
 directly on GitHub and changes are reviewable as diffs. The model matches
 [`schema.sql`](schema.sql) exactly — if they diverge, this file is wrong.
 
+A rendered PNG is committed as [`er-diagram.png`](er-diagram.png) for the LMS document.
+
 ## Diagram
 
 ```mermaid
@@ -268,14 +270,29 @@ an embedded array, which is the comparison that portfolio is built on.
 
 ## Generating the PNG
 
-```bash
-# Option A: Mermaid CLI
-npx -p @mermaid-js/mermaid-cli mmdc -i er-diagram.md -o er-diagram.png -w 2400
+The committed image is produced reproducibly by `scripts/export-diagram.ps1`. It extracts
+the Mermaid block above and renders it with Mermaid CLI v12, using the Chrome already
+installed on the machine so no Chromium download is required.
 
-# Option B: DBeaver / DataGrip reverse-engineer the live schema, which guarantees
-#           the diagram matches schema.sql
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/export-diagram.ps1
 ```
 
-Record the tool used here, since the brief requires external tools to be acknowledged.
+Equivalent once the block is saved as a `.mmd` file:
 
-Tools used: _<fill in when exported>_
+```bash
+npx @mermaid-js/mermaid-cli@12 -i er-diagram.mmd -o er-diagram.png --size 2400 -b white
+```
+
+Note that Mermaid CLI v12 renamed the width flag: it is `--size`, not the `-w` used in most
+tutorials.
+
+## Tools Acknowledged
+
+| Tool | Version | Used for |
+|---|---|---|
+| Mermaid CLI | 12.0.0 | Rendering the diagram source to PNG |
+| Google Chrome | headless | Rendering engine used by Mermaid CLI |
+| PostgreSQL | 16 | Verifying the schema the diagram describes |
+
+The diagram is authored by hand from `schema.sql`. If the two diverge, `schema.sql` wins.

@@ -18,7 +18,7 @@
 | `schema.sql` | DDL — 21 relations, types, keys, constraints, indexes |
 | `seed-data.sql` | Deterministic sample data. Everything downstream depends on this. |
 | `er-diagram.md` | Mermaid ER diagram (renders on GitHub) |
-| `er-diagram.png` | Exported image for the LMS document — _not yet produced_ |
+| `er-diagram.png` | Exported image for the LMS document (2400 px, generated from the source above) |
 | `normalisation.md` | Step-by-step normalisation justification and design decisions |
 | `constraint-tests.sql` | Ten statements that must all fail, proving the constraints work |
 | `constraint-tests-output.txt` | Raw output from the run above |
@@ -32,7 +32,15 @@
 - [x] Normalisation explanation (1NF → 3NF) with justified denormalisation
 - [x] Seed data at a volume that makes query plans meaningful
 - [x] Constraint verification with captured output
-- [ ] ER diagram exported to PNG
+- [x] ER diagram exported to PNG
+
+## Reproducing the Diagram
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/export-diagram.ps1
+```
+
+Uses the Chrome already installed on the machine; Mermaid CLI does not download Chromium.
 
 ## Verified Row Counts
 

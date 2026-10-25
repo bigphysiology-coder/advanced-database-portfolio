@@ -84,6 +84,11 @@ advanced-database-portfolio/
 │   ├── case-study.md          <- organisation statement (required by brief, p.2)
 │   ├── ai-use-declaration.md  <- AI tool disclosure (required, p.7)
 │   └── screenshots/
+├── scripts/
+│   ├── verify.ps1             <- environment check: containers, schema, seed counts
+│   ├── verify.sh              <- same, for macOS/Linux/WSL
+│   ├── export-diagram.ps1     <- regenerates er-diagram.png from the Mermaid source
+│   └── puppeteer.json         <- renderer config (uses system Chrome, no Chromium download)
 ├── portfolio-1-database-design/
 │   ├── schema.sql                     <- DDL: 21 relations, keys, constraints, triggers
 │   ├── seed-data.sql                  <- deterministic sample data (drives P2, P3, P4)
