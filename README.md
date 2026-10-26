@@ -91,7 +91,7 @@ advanced-database-portfolio/
 │   └── puppeteer.json         <- renderer config (uses system Chrome, no Chromium download)
 ├── portfolio-1-database-design/
 │   ├── schema.sql                     <- DDL: 21 relations, keys, constraints, triggers
-│   ├── seed-data.sql                  <- deterministic sample data (drives P2, P3, P4)
+│   ├── seed-data.sql                  <- synthetic sample data (drives P2, P3, P4)
 │   ├── er-diagram.md                  <- Mermaid source, renders on GitHub
 │   ├── er-diagram.png                 <- exported image for the LMS document
 │   ├── normalisation.md               <- 1NF -> 3NF justification + design decisions
@@ -214,7 +214,7 @@ bash scripts/verify.sh          # macOS / Linux / WSL / Git Bash
 
 It checks container state, PostgreSQL readiness, that all 21 tables and the exclusion
 constraint exist, that seed row counts match, and that MongoDB responds to an
-authenticated ping. Exit code `0` means the environment is ready.
+authenticated ping when it is running. Exit code `0` means the environment is ready.
 
 ### If the Init Script Failed
 
