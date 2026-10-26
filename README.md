@@ -66,7 +66,7 @@ Relevant because the repository is public.
 | # | Component | Marks | Directory | Status |
 |---|---|---|---|---|
 | 1 | Database Design and Modelling | 7 | [`portfolio-1-database-design/`](portfolio-1-database-design/) | complete |
-| 2 | Query Processing and Optimisation | 7 | [`portfolio-2-query-optimisation/`](portfolio-2-query-optimisation/) | _pending_ |
+| 2 | Query Processing and Optimisation | 7 | [`portfolio-2-query-optimisation/`](portfolio-2-query-optimisation/) | complete |
 | 3 | Transactions and Concurrency | 7 | [`portfolio-3-transactions-concurrency/`](portfolio-3-transactions-concurrency/) | _pending_ |
 | 4 | NoSQL and Advanced Data Models | 7 | [`portfolio-4-nosql/`](portfolio-4-nosql/) | _pending_ |
 | 5 | Distributed and Cloud Database | 6 | [`portfolio-5-distributed-cloud/`](portfolio-5-distributed-cloud/) | _pending_ |

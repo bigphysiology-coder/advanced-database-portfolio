@@ -9,24 +9,36 @@
 -- makes the optimisation work in P2 impossible to demonstrate.
 --
 -- Volumes produced (approximate; verified by running the script):
---   departments   10        patients        500
---   staff         60        doctor_profile   50
---   wards          6        beds             60
---   schedules    250        appointments   5,700
---   encounters   4,470     vitals         4,470
---   admissions      72     audit_log    ~15,000
---   diagnoses   ~6,650     prescriptions  8,940
---   lab_orders  ~6,650     lab_results  ~11,800
+--   departments   10        patients      20,000
+--   staff         86        doctor_profile    50
+--   wards          6        beds              60
+--   schedules    250        appointments  82,000
+--   encounters ~62,600     vitals      ~62,600
+--   admissions    ~890     audit_log  ~227,000
+--   diagnoses  ~93,900     prescriptions ~125,200
+--   lab_orders ~93,900     lab_results  ~164,000
+--
+-- The appointment table holds 100 days of history at 700 appointments/day
+-- (50 doctors x 14 half-hour slots x 100 days) plus 60 days of future bookings
+-- (50 doctors x 4 slots x 60 days). This is deliberately large enough that a
+-- sequential scan and an index scan have visibly different costs; a 500-row
+-- table produces the same plan whether or not it is indexed. Portfolio 2
+-- measures against this volume.
 --
 -- Structure is fixed: reference tables, appointments, encounters, vitals and
--- prescriptions produce exactly the same counts on every run. The four tables
+-- prescriptions produce exactly the same counts on every run. The tables
 -- selected using a hash of a UUID (next_of_kin, diagnosis, lab_order,
--- lab_result) vary by a few per cent between runs, because primary keys are
--- generated randomly. The counts are still the same order of magnitude, which is
--- what matters for query plans.
+-- lab_result, admission) vary by a few per cent between runs, because primary
+-- keys are generated randomly. The counts are still the same order of
+-- magnitude, which is what matters for query plans.
 --
 -- Execution order: schema.sql, then seed-data.sql, against an EMPTY database.
 -- ============================================================================
+
+-- Bulk load, not production traffic. Turning off synchronous commit avoids one
+-- fsync per statement and cannot corrupt the database; the worst case is losing
+-- the last few seed statements after a crash, and the volume is rebuilt anyway.
+SET synchronous_commit = off;
 
 -- Helper: stable, readable hash. Dropped at the end so it does not become part
 -- of the assessed schema.
@@ -147,17 +159,23 @@ SELECT
     (ARRAY['Otieno','Mwangi','Kariuki','Njoroge','Odhiambo','Chebet','Kiptoo','Mutua','Waweru','Auma',
            'Barasa','Cheruiyot','Gitau','Kamau','Langat','Maina','Njeri','Omondi','Rotich','Wafula'])[1 + ((g * 7) % 20)],
     CASE WHEN g <= 50 THEN 'DOCTOR'::staff_role
-         WHEN g <= 56 THEN 'NURSE'::staff_role
-         WHEN g <= 58 THEN 'RECEPTIONIST'::staff_role
-         WHEN g <= 59 THEN 'LAB_TECH'::staff_role
+         WHEN g <= 70 THEN 'NURSE'::staff_role
+         WHEN g <= 76 THEN 'RECEPTIONIST'::staff_role
+         WHEN g <= 82 THEN 'LAB_TECH'::staff_role
          ELSE 'PHARMACIST'::staff_role END,
-    (SELECT d.department_id
-       FROM department d
-      WHERE d.code = (ARRAY['MED','SURG','PAED','OBGYN','CARD','ONCO','PATH'])[1 + (g % 7)]),
+    CASE
+        WHEN g <= 70 THEN
+            (SELECT d.department_id
+               FROM department d
+              WHERE d.code = (ARRAY['MED','SURG','PAED','OBGYN','CARD','ONCO','PATH'])[1 + (g % 7)])
+        WHEN g <= 76 THEN (SELECT department_id FROM department WHERE code = 'ADMIN')
+        WHEN g <= 82 THEN (SELECT department_id FROM department WHERE code = 'PATH')
+        ELSE (SELECT department_id FROM department WHERE code = 'ADMIN')
+    END,
     'staff' || g::text || '@riverbend.example',
     '+254711' || lpad(((g * 7919) % 1000000)::text, 6, '0'),
     DATE '2005-01-01' + ((g * 173) % 7000)
-FROM generate_series(1, 60) AS g;
+FROM generate_series(1, 86) AS g;
 
 
 INSERT INTO doctor_profile (staff_id, specialty, license_no, license_expires_on)
@@ -218,7 +236,7 @@ SELECT
            'Barasa','Cheruiyot','Gitau','Kamau','Langat','Maina','Njeri','Omondi','Rotich','Wafula'])[1 + ((g * 3) % 20)],
     DATE '1940-01-01' + ((g * 7919) % 28000),
     (ARRAY['F','M','F','M','O','U'])[1 + (g % 6)]::sex_type,
-    '+2547' || lpad(((g * 1234567) % 100000000)::text, 8, '0'),
+    '+2547' || lpad(((g::bigint * 1234567) % 100000000)::text, 8, '0'),
     lower((ARRAY['amina','brian','chloe','daniel','esther','farouk','grace','hassan','irene','james',
                  'kelvin','lydia','moses','nancy','omar','peter','rachel','samuel','teresa','victor'])[1 + (g % 20)])
         || '.' || g::text || '@example.com',
@@ -226,8 +244,8 @@ SELECT
     ((g * 13) % 400)::text || ' Riverside Drive',
     (ARRAY['Nairobi','Mombasa','Kisumu','Nakuru','Eldoret'])[1 + (g % 5)],
     (ARRAY['A+','A-','B+','B-','AB+','AB-','O+','O-'])[1 + (g % 8)],
-    timestamptz '2020-01-01 08:00:00+03' + ((g % 2000) * interval '1 day')
-FROM generate_series(1, 500) AS g;
+    timestamptz '2015-01-01 08:00:00+03' + ((g % 3650) * interval '1 day')
+FROM generate_series(1, 20000) AS g;
 
 
 INSERT INTO next_of_kin (patient_id, full_name, relationship, phone, is_primary)
@@ -244,8 +262,13 @@ WHERE seed_hash(p.patient_id::text) % 10 < 6;
 -- ============================================================================
 -- 6. Appointments
 --
--- Constructed so that (doctor, day) is unique: 50 doctors x 100 days = 5,000.
--- Guaranteed injective, therefore no accidental exclusion-constraint failure.
+-- 100 days of history at 700 appointments/day: 50 doctors x 14 half-hour
+-- slots x 100 days = 70,000. (doctor, day, slot) is unique, so the exclusion
+-- constraint cannot fail by accident.
+--
+-- Only the first 17,000 patients are booked. The remaining 3,000 have no
+-- appointment at all, which gives Portfolio 2 a real dormant-patient
+-- population to find with an anti-join rather than an empty result.
 -- ============================================================================
 
 WITH docs AS (
@@ -254,63 +277,87 @@ WITH docs AS (
     JOIN staff s ON s.staff_id = dp.staff_id
 ),
 pts AS (
-    SELECT patient_id, row_number() OVER (ORDER BY mrn) - 1 AS rn
-    FROM patient
+    SELECT patient_id, rn
+    FROM (
+        SELECT patient_id, row_number() OVER (ORDER BY mrn) - 1 AS rn
+        FROM patient
+    ) numbered
+    WHERE rn < 17000
+),
+receptionist AS (
+    SELECT staff_id FROM staff WHERE role = 'RECEPTIONIST' ORDER BY employee_no LIMIT 1
+),
+src AS (
+    SELECT n, d.staff_id AS doctor_id, p.patient_id,
+           ((n - 1) / 50) AS combo
+    FROM generate_series(1, 70000) AS n
+    JOIN docs d ON d.rn = (n - 1) % 50
+    JOIN pts p ON p.rn = (n * 13) % 17000
+),
+calc AS (
+    SELECT src.*,
+           (((CURRENT_DATE - 100) + (src.combo / 14))::date
+             + TIME '09:00'
+             + ((src.combo % 14) * interval '30 minutes'))::timestamptz AS ts
+    FROM src
 )
 INSERT INTO appointment (patient_id, doctor_id, slot_start, slot_end, status, reason,
                          booked_by, created_at, cancelled_at)
 SELECT
-    p.patient_id,
-    d.staff_id,
-    ts,
-    ts + interval '30 minutes',
+    c.patient_id,
+    c.doctor_id,
+    c.ts,
+    c.ts + interval '30 minutes',
     st.status,
     (ARRAY['Fever and headache','Chest pain','Persistent cough','Abdominal pain',
-           'Lower back pain','Shortness of breath','Fatigue','Routine review'])[1 + (n % 8)],
-    (SELECT staff_id FROM staff WHERE role = 'RECEPTIONIST' ORDER BY employee_no LIMIT 1),
-    ts - interval '3 days',
-    CASE WHEN st.status = 'CANCELLED' THEN ts - interval '1 day' END
-FROM generate_series(1, 5000) AS n
-JOIN docs d ON d.rn = (n - 1) % 50
-JOIN pts  p ON p.rn = (n * 13) % 500
+           'Lower back pain','Shortness of breath','Fatigue','Routine review'])[1 + (c.n % 8)],
+    r.staff_id,
+    c.ts - interval '3 days',
+    CASE WHEN st.status = 'CANCELLED' THEN c.ts - interval '1 day' END
+FROM calc c
+CROSS JOIN receptionist r
 CROSS JOIN LATERAL (
-    SELECT (CURRENT_DATE - 100 + ((n - 1) / 50))::date AS day
-) AS dd
-CROSS JOIN LATERAL (
-    SELECT (dd.day + TIME '09:00' + (((n - 1) / 50) % 8) * interval '30 minutes')::timestamptz AS ts
-) AS tt
-CROSS JOIN LATERAL (
-    SELECT CASE WHEN n % 20 = 0 THEN 'CANCELLED'::appointment_status
-                WHEN n % 17 = 0 THEN 'NO_SHOW'::appointment_status
+    SELECT CASE WHEN c.n % 20 = 0 THEN 'CANCELLED'::appointment_status
+                WHEN c.n % 17 = 0 THEN 'NO_SHOW'::appointment_status
                 ELSE 'COMPLETED'::appointment_status END AS status
 ) AS st;
 
 
--- Upcoming appointments: 50 doctors x 14 days, one slot each. These are the
--- rows Portfolio 3 contends over.
+-- Future bookings: 50 doctors x 4 half-hour slots x 60 days = 12,000. These
+-- are the rows Portfolio 3 contends over and the live schedule Portfolio 2
+-- audits for double-booking.
 WITH docs AS (
     SELECT dp.staff_id, row_number() OVER (ORDER BY s.employee_no) - 1 AS rn
     FROM doctor_profile dp
     JOIN staff s ON s.staff_id = dp.staff_id
 ),
 pts AS (
-    SELECT patient_id, row_number() OVER (ORDER BY mrn) - 1 AS rn
-    FROM patient
+    SELECT patient_id, rn
+    FROM (
+        SELECT patient_id, row_number() OVER (ORDER BY mrn) - 1 AS rn
+        FROM patient
+    ) numbered
+    WHERE rn < 17000
+),
+receptionist AS (
+    SELECT staff_id FROM staff WHERE role = 'RECEPTIONIST' ORDER BY employee_no LIMIT 1
+),
+calc AS (
+    SELECT d.staff_id AS doctor_id, p.patient_id, k, slot,
+           (((CURRENT_DATE + 1) + k)::date
+             + TIME '09:00'
+             + (slot * interval '30 minutes'))::timestamptz AS ts
+    FROM generate_series(0, 59) AS k
+    CROSS JOIN docs d
+    CROSS JOIN generate_series(0, 3) AS slot
+    JOIN pts p ON p.rn = seed_hash(k::text || ':' || d.rn::text || ':' || slot::text) % 17000
 )
 INSERT INTO appointment (patient_id, doctor_id, slot_start, slot_end, status, reason,
                          booked_by, created_at)
-SELECT
-    p.patient_id,
-    d.staff_id,
-    (CURRENT_DATE + 1 + k) + TIME '10:00' + (d.rn % 8) * interval '30 minutes',
-    (CURRENT_DATE + 1 + k) + TIME '10:30' + (d.rn % 8) * interval '30 minutes',
-    'BOOKED',
-    'Follow-up review',
-    (SELECT staff_id FROM staff WHERE role = 'RECEPTIONIST' ORDER BY employee_no LIMIT 1),
-    now() - interval '2 days'
-FROM generate_series(0, 13) AS k
-CROSS JOIN docs d
-JOIN pts p ON p.rn = ((k * 37) + d.rn) % 500;
+SELECT c.patient_id, c.doctor_id, c.ts, c.ts + interval '30 minutes',
+       'BOOKED', 'Follow-up review', r.staff_id, now() - interval '2 days'
+FROM calc c
+CROSS JOIN receptionist r;
 
 
 -- ============================================================================
@@ -348,20 +395,54 @@ SELECT e.encounter_id,
 FROM encounter e;
 
 
+-- Diagnoses are deliberately skewed rather than uniform: a real hospital sees
+-- far more upper respiratory infections and hypertension than tuberculosis.
+-- The weights sum to 83; the cumulative sum turns a hash bucket into a weighted
+-- pick without a random() call, so the distribution is stable across reloads.
+WITH weighted AS (
+    SELECT icd_code,
+           sum(weight) OVER (ORDER BY icd_code) AS cumulative,
+           sum(weight) OVER () AS total
+    FROM (VALUES
+        ('J06.9', 12), ('I10',   10), ('A09',    8), ('M54.5',  7),
+        ('J18.9',  6), ('E11.9',  5), ('K30',    4), ('R51',    4),
+        ('L30.9',  3), ('I25.9',  3), ('N39.0',  3), ('J45.9',  3),
+        ('K21.9',  3), ('F41.9',  2), ('B54',    2), ('O80',    2),
+        ('S52.5',  2), ('H10.9',  2), ('A15.0',  1), ('E78.5',  1)
+    ) AS w(icd_code, weight)
+)
 INSERT INTO diagnosis (encounter_id, icd_code, diagnosis_type, note, diagnosed_at)
 SELECT e.encounter_id,
-       (SELECT c.icd_code FROM icd_code c
-         ORDER BY seed_hash(e.encounter_id::text || c.icd_code) LIMIT 1),
+       (SELECT w.icd_code
+          FROM weighted w
+         WHERE w.cumulative >= 1 + (seed_hash(e.encounter_id::text) % w.total)
+         ORDER BY w.cumulative
+         LIMIT 1),
        'PRIMARY',
        NULL,
        e.started_at + interval '15 minutes'
 FROM encounter e;
 
 
+WITH weighted AS (
+    SELECT icd_code,
+           sum(weight) OVER (ORDER BY icd_code) AS cumulative,
+           sum(weight) OVER () AS total
+    FROM (VALUES
+        ('J06.9', 12), ('I10',   10), ('A09',    8), ('M54.5',  7),
+        ('J18.9',  6), ('E11.9',  5), ('K30',    4), ('R51',    4),
+        ('L30.9',  3), ('I25.9',  3), ('N39.0',  3), ('J45.9',  3),
+        ('K21.9',  3), ('F41.9',  2), ('B54',    2), ('O80',    2),
+        ('S52.5',  2), ('H10.9',  2), ('A15.0',  1), ('E78.5',  1)
+    ) AS w(icd_code, weight)
+)
 INSERT INTO diagnosis (encounter_id, icd_code, diagnosis_type, note, diagnosed_at)
 SELECT e.encounter_id,
-       (SELECT c.icd_code FROM icd_code c
-         ORDER BY seed_hash(e.encounter_id::text || 'sec' || c.icd_code) LIMIT 1),
+       (SELECT w.icd_code
+          FROM weighted w
+         WHERE w.cumulative >= 1 + (seed_hash(e.encounter_id::text || 'sec') % w.total)
+         ORDER BY w.cumulative
+         LIMIT 1),
        'SECONDARY',
        'Noted during review',
        e.started_at + interval '16 minutes'
@@ -499,9 +580,13 @@ WHERE a.analyte_id = r.analyte_id;
 
 -- ============================================================================
 -- 11. Refresh statistics
+--
+-- VACUUM, not just ANALYZE: the visibility map is what allows an index-only
+-- scan in Portfolio 2. Without it the planner has to visit the heap for every
+-- row, and a covering index looks less attractive than it really is.
 -- ============================================================================
 
-ANALYZE;
+VACUUM (ANALYZE);
 
 
 -- ============================================================================

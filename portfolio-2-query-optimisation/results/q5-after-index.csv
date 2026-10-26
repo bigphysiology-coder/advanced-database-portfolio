@@ -1,0 +1,2 @@
+﻿"Query","Runs","Used","MedianExecMs","MinExecMs","MaxExecMs","MedianPlanMs","TopNode"
+"Q5","5","4","296.798","229.277","437.534","0.448","Limit"

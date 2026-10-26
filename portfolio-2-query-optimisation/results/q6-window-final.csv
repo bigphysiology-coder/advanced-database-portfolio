@@ -1,0 +1,2 @@
+﻿"Query","Runs","Used","MedianExecMs","MinExecMs","MaxExecMs","MedianPlanMs","TopNode"
+"Q6","5","4","43.883","38.776","49.29","0.456","Subquery Scan on flagged"

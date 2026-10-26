@@ -1,0 +1,297 @@
+SET
+============================================================
+Portfolio 2 - execution plans
+Database: hospital
+Captured: 2026-10-26 07:34:16
+Runs per query: 5 (summariser discards run 1)
+============================================================
+
+Server:
+                                                       version                                                        
+----------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+
+Dataset:
+  relation   | count  
+-------------+--------
+ appointment |  82000
+ diagnosis   |  93885
+ encounter   |  62588
+ lab_order   |  93885
+ lab_result  | 163387
+ patient     |  20000
+(6 rows)
+
+
+===== Q1 run 1 =====
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=18898.56..18898.57 rows=3 width=111) (actual time=185.689..185.696 rows=4 loops=1)
+   Sort Key: e.started_at DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=14246
+   ->  Nested Loop Left Join  (cost=5.43..18898.53 rows=3 width=111) (actual time=48.330..185.613 rows=4 loops=1)
+         Buffers: shared hit=14243
+         ->  Nested Loop Left Join  (cost=5.29..30.18 rows=3 width=45) (actual time=0.134..0.310 rows=4 loops=1)
+               Buffers: shared hit=31
+               ->  Nested Loop  (cost=4.88..28.60 rows=3 width=40) (actual time=0.104..0.188 rows=4 loops=1)
+                     Buffers: shared hit=15
+                     ->  Nested Loop  (cost=4.73..28.12 rows=3 width=44) (actual time=0.078..0.098 rows=4 loops=1)
+                           Buffers: shared hit=7
+                           ->  Index Scan using patient_mrn_key on patient pt  (cost=0.29..8.30 rows=1 width=16) (actual time=0.029..0.032 rows=1 loops=1)
+                                 Index Cond: ((mrn)::text = 'MRN-0000002'::text)
+                                 Buffers: shared hit=3
+                           ->  Bitmap Heap Scan on encounter e  (cost=4.45..19.77 rows=4 width=60) (actual time=0.039..0.050 rows=4 loops=1)
+                                 Recheck Cond: (pt.patient_id = patient_id)
+                                 Heap Blocks: exact=1
+                                 Buffers: shared hit=4
+                                 ->  Bitmap Index Scan on ix_encounter_patient_started  (cost=0.00..4.45 rows=4 width=0) (actual time=0.028..0.028 rows=4 loops=1)
+                                       Index Cond: (patient_id = pt.patient_id)
+                                       Buffers: shared hit=3
+                     ->  Index Scan using staff_pkey on staff s  (cost=0.14..0.16 rows=1 width=28) (actual time=0.016..0.016 rows=1 loops=4)
+                           Index Cond: (staff_id = e.doctor_id)
+                           Buffers: shared hit=8
+               ->  Index Scan using one_primary_diagnosis_per_encounter on diagnosis d  (cost=0.41..0.52 rows=1 width=21) (actual time=0.021..0.027 rows=1 loops=4)
+                     Index Cond: (encounter_id = e.encounter_id)
+                     Buffers: shared hit=16
+         ->  Index Scan using icd_code_pkey on icd_code ic  (cost=0.14..0.16 rows=1 width=35) (actual time=0.014..0.014 rows=1 loops=4)
+               Index Cond: ((icd_code)::text = (d.icd_code)::text)
+               Buffers: shared hit=8
+         SubPlan 1
+           ->  Aggregate  (cost=3779.70..3779.72 rows=1 width=8) (actual time=24.444..24.445 rows=1 loops=4)
+                 Buffers: shared hit=8860
+                 ->  Seq Scan on prescription p  (cost=0.00..3779.70 rows=2 width=0) (actual time=0.007..24.429 rows=2 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 125174
+                       Buffers: shared hit=8860
+         SubPlan 2
+           ->  Aggregate  (cost=2509.57..2509.58 rows=1 width=8) (actual time=21.834..21.834 rows=1 loops=4)
+                 Buffers: shared hit=5344
+                 ->  Seq Scan on lab_order l  (cost=0.00..2509.56 rows=2 width=0) (actual time=0.010..21.815 rows=1 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 93884
+                       Buffers: shared hit=5344
+ Planning:
+   Buffers: shared hit=301
+ Planning Time: 3.128 ms
+ Execution Time: 186.067 ms
+(49 rows)
+
+===== Q1 run 2 =====
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=18898.56..18898.57 rows=3 width=111) (actual time=147.320..147.327 rows=4 loops=1)
+   Sort Key: e.started_at DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=14243
+   ->  Nested Loop Left Join  (cost=5.43..18898.53 rows=3 width=111) (actual time=37.421..147.292 rows=4 loops=1)
+         Buffers: shared hit=14243
+         ->  Nested Loop Left Join  (cost=5.29..30.18 rows=3 width=45) (actual time=0.159..0.267 rows=4 loops=1)
+               Buffers: shared hit=31
+               ->  Nested Loop  (cost=4.88..28.60 rows=3 width=40) (actual time=0.131..0.194 rows=4 loops=1)
+                     Buffers: shared hit=15
+                     ->  Nested Loop  (cost=4.73..28.12 rows=3 width=44) (actual time=0.110..0.127 rows=4 loops=1)
+                           Buffers: shared hit=7
+                           ->  Index Scan using patient_mrn_key on patient pt  (cost=0.29..8.30 rows=1 width=16) (actual time=0.080..0.082 rows=1 loops=1)
+                                 Index Cond: ((mrn)::text = 'MRN-0000002'::text)
+                                 Buffers: shared hit=3
+                           ->  Bitmap Heap Scan on encounter e  (cost=4.45..19.77 rows=4 width=60) (actual time=0.021..0.030 rows=4 loops=1)
+                                 Recheck Cond: (pt.patient_id = patient_id)
+                                 Heap Blocks: exact=1
+                                 Buffers: shared hit=4
+                                 ->  Bitmap Index Scan on ix_encounter_patient_started  (cost=0.00..4.45 rows=4 width=0) (actual time=0.013..0.014 rows=4 loops=1)
+                                       Index Cond: (patient_id = pt.patient_id)
+                                       Buffers: shared hit=3
+                     ->  Index Scan using staff_pkey on staff s  (cost=0.14..0.16 rows=1 width=28) (actual time=0.012..0.012 rows=1 loops=4)
+                           Index Cond: (staff_id = e.doctor_id)
+                           Buffers: shared hit=8
+               ->  Index Scan using one_primary_diagnosis_per_encounter on diagnosis d  (cost=0.41..0.52 rows=1 width=21) (actual time=0.011..0.016 rows=1 loops=4)
+                     Index Cond: (encounter_id = e.encounter_id)
+                     Buffers: shared hit=16
+         ->  Index Scan using icd_code_pkey on icd_code ic  (cost=0.14..0.16 rows=1 width=35) (actual time=0.010..0.010 rows=1 loops=4)
+               Index Cond: ((icd_code)::text = (d.icd_code)::text)
+               Buffers: shared hit=8
+         SubPlan 1
+           ->  Aggregate  (cost=3779.70..3779.72 rows=1 width=8) (actual time=21.469..21.469 rows=1 loops=4)
+                 Buffers: shared hit=8860
+                 ->  Seq Scan on prescription p  (cost=0.00..3779.70 rows=2 width=0) (actual time=0.005..21.451 rows=2 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 125174
+                       Buffers: shared hit=8860
+         SubPlan 2
+           ->  Aggregate  (cost=2509.57..2509.58 rows=1 width=8) (actual time=15.239..15.239 rows=1 loops=4)
+                 Buffers: shared hit=5344
+                 ->  Seq Scan on lab_order l  (cost=0.00..2509.56 rows=2 width=0) (actual time=0.011..15.202 rows=1 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 93884
+                       Buffers: shared hit=5344
+ Planning:
+   Buffers: shared hit=34
+ Planning Time: 2.131 ms
+ Execution Time: 147.486 ms
+(49 rows)
+
+===== Q1 run 3 =====
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=18898.56..18898.57 rows=3 width=111) (actual time=204.772..204.779 rows=4 loops=1)
+   Sort Key: e.started_at DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=14243
+   ->  Nested Loop Left Join  (cost=5.43..18898.53 rows=3 width=111) (actual time=44.055..204.745 rows=4 loops=1)
+         Buffers: shared hit=14243
+         ->  Nested Loop Left Join  (cost=5.29..30.18 rows=3 width=45) (actual time=0.112..0.235 rows=4 loops=1)
+               Buffers: shared hit=31
+               ->  Nested Loop  (cost=4.88..28.60 rows=3 width=40) (actual time=0.088..0.158 rows=4 loops=1)
+                     Buffers: shared hit=15
+                     ->  Nested Loop  (cost=4.73..28.12 rows=3 width=44) (actual time=0.068..0.089 rows=4 loops=1)
+                           Buffers: shared hit=7
+                           ->  Index Scan using patient_mrn_key on patient pt  (cost=0.29..8.30 rows=1 width=16) (actual time=0.042..0.044 rows=1 loops=1)
+                                 Index Cond: ((mrn)::text = 'MRN-0000002'::text)
+                                 Buffers: shared hit=3
+                           ->  Bitmap Heap Scan on encounter e  (cost=4.45..19.77 rows=4 width=60) (actual time=0.019..0.031 rows=4 loops=1)
+                                 Recheck Cond: (pt.patient_id = patient_id)
+                                 Heap Blocks: exact=1
+                                 Buffers: shared hit=4
+                                 ->  Bitmap Index Scan on ix_encounter_patient_started  (cost=0.00..4.45 rows=4 width=0) (actual time=0.012..0.013 rows=4 loops=1)
+                                       Index Cond: (patient_id = pt.patient_id)
+                                       Buffers: shared hit=3
+                     ->  Index Scan using staff_pkey on staff s  (cost=0.14..0.16 rows=1 width=28) (actual time=0.012..0.012 rows=1 loops=4)
+                           Index Cond: (staff_id = e.doctor_id)
+                           Buffers: shared hit=8
+               ->  Index Scan using one_primary_diagnosis_per_encounter on diagnosis d  (cost=0.41..0.52 rows=1 width=21) (actual time=0.011..0.016 rows=1 loops=4)
+                     Index Cond: (encounter_id = e.encounter_id)
+                     Buffers: shared hit=16
+         ->  Index Scan using icd_code_pkey on icd_code ic  (cost=0.14..0.16 rows=1 width=35) (actual time=0.012..0.012 rows=1 loops=4)
+               Index Cond: ((icd_code)::text = (d.icd_code)::text)
+               Buffers: shared hit=8
+         SubPlan 1
+           ->  Aggregate  (cost=3779.70..3779.72 rows=1 width=8) (actual time=25.246..25.246 rows=1 loops=4)
+                 Buffers: shared hit=8860
+                 ->  Seq Scan on prescription p  (cost=0.00..3779.70 rows=2 width=0) (actual time=0.006..25.231 rows=2 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 125174
+                       Buffers: shared hit=8860
+         SubPlan 2
+           ->  Aggregate  (cost=2509.57..2509.58 rows=1 width=8) (actual time=25.847..25.847 rows=1 loops=4)
+                 Buffers: shared hit=5344
+                 ->  Seq Scan on lab_order l  (cost=0.00..2509.56 rows=2 width=0) (actual time=0.007..25.829 rows=1 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 93884
+                       Buffers: shared hit=5344
+ Planning:
+   Buffers: shared hit=34
+ Planning Time: 1.832 ms
+ Execution Time: 205.029 ms
+(49 rows)
+
+===== Q1 run 4 =====
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=18898.56..18898.57 rows=3 width=111) (actual time=203.878..203.888 rows=4 loops=1)
+   Sort Key: e.started_at DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=14243
+   ->  Nested Loop Left Join  (cost=5.43..18898.53 rows=3 width=111) (actual time=62.262..203.849 rows=4 loops=1)
+         Buffers: shared hit=14243
+         ->  Nested Loop Left Join  (cost=5.29..30.18 rows=3 width=45) (actual time=0.129..0.275 rows=4 loops=1)
+               Buffers: shared hit=31
+               ->  Nested Loop  (cost=4.88..28.60 rows=3 width=40) (actual time=0.099..0.182 rows=4 loops=1)
+                     Buffers: shared hit=15
+                     ->  Nested Loop  (cost=4.73..28.12 rows=3 width=44) (actual time=0.073..0.095 rows=4 loops=1)
+                           Buffers: shared hit=7
+                           ->  Index Scan using patient_mrn_key on patient pt  (cost=0.29..8.30 rows=1 width=16) (actual time=0.043..0.046 rows=1 loops=1)
+                                 Index Cond: ((mrn)::text = 'MRN-0000002'::text)
+                                 Buffers: shared hit=3
+                           ->  Bitmap Heap Scan on encounter e  (cost=4.45..19.77 rows=4 width=60) (actual time=0.019..0.029 rows=4 loops=1)
+                                 Recheck Cond: (pt.patient_id = patient_id)
+                                 Heap Blocks: exact=1
+                                 Buffers: shared hit=4
+                                 ->  Bitmap Index Scan on ix_encounter_patient_started  (cost=0.00..4.45 rows=4 width=0) (actual time=0.012..0.013 rows=4 loops=1)
+                                       Index Cond: (patient_id = pt.patient_id)
+                                       Buffers: shared hit=3
+                     ->  Index Scan using staff_pkey on staff s  (cost=0.14..0.16 rows=1 width=28) (actual time=0.015..0.015 rows=1 loops=4)
+                           Index Cond: (staff_id = e.doctor_id)
+                           Buffers: shared hit=8
+               ->  Index Scan using one_primary_diagnosis_per_encounter on diagnosis d  (cost=0.41..0.52 rows=1 width=21) (actual time=0.014..0.019 rows=1 loops=4)
+                     Index Cond: (encounter_id = e.encounter_id)
+                     Buffers: shared hit=16
+         ->  Index Scan using icd_code_pkey on icd_code ic  (cost=0.14..0.16 rows=1 width=35) (actual time=0.015..0.015 rows=1 loops=4)
+               Index Cond: ((icd_code)::text = (d.icd_code)::text)
+               Buffers: shared hit=8
+         SubPlan 1
+           ->  Aggregate  (cost=3779.70..3779.72 rows=1 width=8) (actual time=29.786..29.787 rows=1 loops=4)
+                 Buffers: shared hit=8860
+                 ->  Seq Scan on prescription p  (cost=0.00..3779.70 rows=2 width=0) (actual time=0.007..29.766 rows=2 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 125174
+                       Buffers: shared hit=8860
+         SubPlan 2
+           ->  Aggregate  (cost=2509.57..2509.58 rows=1 width=8) (actual time=21.030..21.030 rows=1 loops=4)
+                 Buffers: shared hit=5344
+                 ->  Seq Scan on lab_order l  (cost=0.00..2509.56 rows=2 width=0) (actual time=0.012..20.994 rows=1 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 93884
+                       Buffers: shared hit=5344
+ Planning:
+   Buffers: shared hit=34
+ Planning Time: 10.456 ms
+ Execution Time: 204.156 ms
+(49 rows)
+
+===== Q1 run 5 =====
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=18898.56..18898.57 rows=3 width=111) (actual time=151.902..151.911 rows=4 loops=1)
+   Sort Key: e.started_at DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=14243
+   ->  Nested Loop Left Join  (cost=5.43..18898.53 rows=3 width=111) (actual time=40.733..151.876 rows=4 loops=1)
+         Buffers: shared hit=14243
+         ->  Nested Loop Left Join  (cost=5.29..30.18 rows=3 width=45) (actual time=0.153..0.268 rows=4 loops=1)
+               Buffers: shared hit=31
+               ->  Nested Loop  (cost=4.88..28.60 rows=3 width=40) (actual time=0.123..0.192 rows=4 loops=1)
+                     Buffers: shared hit=15
+                     ->  Nested Loop  (cost=4.73..28.12 rows=3 width=44) (actual time=0.099..0.118 rows=4 loops=1)
+                           Buffers: shared hit=7
+                           ->  Index Scan using patient_mrn_key on patient pt  (cost=0.29..8.30 rows=1 width=16) (actual time=0.069..0.071 rows=1 loops=1)
+                                 Index Cond: ((mrn)::text = 'MRN-0000002'::text)
+                                 Buffers: shared hit=3
+                           ->  Bitmap Heap Scan on encounter e  (cost=4.45..19.77 rows=4 width=60) (actual time=0.021..0.031 rows=4 loops=1)
+                                 Recheck Cond: (pt.patient_id = patient_id)
+                                 Heap Blocks: exact=1
+                                 Buffers: shared hit=4
+                                 ->  Bitmap Index Scan on ix_encounter_patient_started  (cost=0.00..4.45 rows=4 width=0) (actual time=0.013..0.013 rows=4 loops=1)
+                                       Index Cond: (patient_id = pt.patient_id)
+                                       Buffers: shared hit=3
+                     ->  Index Scan using staff_pkey on staff s  (cost=0.14..0.16 rows=1 width=28) (actual time=0.012..0.012 rows=1 loops=4)
+                           Index Cond: (staff_id = e.doctor_id)
+                           Buffers: shared hit=8
+               ->  Index Scan using one_primary_diagnosis_per_encounter on diagnosis d  (cost=0.41..0.52 rows=1 width=21) (actual time=0.011..0.016 rows=1 loops=4)
+                     Index Cond: (encounter_id = e.encounter_id)
+                     Buffers: shared hit=16
+         ->  Index Scan using icd_code_pkey on icd_code ic  (cost=0.14..0.16 rows=1 width=35) (actual time=0.013..0.013 rows=1 loops=4)
+               Index Cond: ((icd_code)::text = (d.icd_code)::text)
+               Buffers: shared hit=8
+         SubPlan 1
+           ->  Aggregate  (cost=3779.70..3779.72 rows=1 width=8) (actual time=20.713..20.713 rows=1 loops=4)
+                 Buffers: shared hit=8860
+                 ->  Seq Scan on prescription p  (cost=0.00..3779.70 rows=2 width=0) (actual time=0.005..20.698 rows=2 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 125174
+                       Buffers: shared hit=8860
+         SubPlan 2
+           ->  Aggregate  (cost=2509.57..2509.58 rows=1 width=8) (actual time=17.155..17.155 rows=1 loops=4)
+                 Buffers: shared hit=5344
+                 ->  Seq Scan on lab_order l  (cost=0.00..2509.56 rows=2 width=0) (actual time=0.005..17.137 rows=1 loops=4)
+                       Filter: (encounter_id = e.encounter_id)
+                       Rows Removed by Filter: 93884
+                       Buffers: shared hit=5344
+ Planning:
+   Buffers: shared hit=34
+ Planning Time: 3.158 ms
+ Execution Time: 152.190 ms
+(49 rows)
+

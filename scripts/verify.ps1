@@ -109,19 +109,28 @@ function Query([string]$sql) {
 # stops it and starts the real one. Both accept connections, so "ready" is not the
 # same as "initialised". Wait until the expected schema and data actually exist
 # instead of trusting the first successful connection.
-$deadline = (Get-Date).AddMinutes(5)
+$deadline = (Get-Date).AddMinutes(12)
 $settled = $false
 while ((Get-Date) -lt $deadline) {
     try {
         $t = Query "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"
         $p = Query "SELECT count(*) FROM patient;"
-        if ($t -eq '21' -and [int]$p -ge 500) { $settled = $true; break }
+        $a = Query "SELECT count(*) FROM appointment;"
+        $r = Query "SELECT count(*) FROM lab_result;"
+        if ($t -eq '21' -and [int]$p -ge 20000 -and [int]$a -ge 82000 -and [int]$r -ge 150000) {
+            # The data is visible, but the entrypoint may still be shutting the
+            # temporary server down. Wait through the restart and confirm the
+            # real server still answers before declaring the load finished.
+            Start-Sleep -Seconds 15
+            $stable = Query "SELECT count(*) FROM lab_result;"
+            if ([int]$stable -ge 150000) { $settled = $true; break }
+        }
     } catch { }
     Start-Sleep -Seconds 3
 }
 
 if (-not $settled) {
-    Fail "initialisation did not complete within 5 minutes"
+    Fail "initialisation did not complete within 12 minutes"
     Fail "inspect with: docker compose logs postgres"
 } else {
     Pass "initialisation complete (schema and seed data present)"
@@ -157,20 +166,20 @@ $exact = [ordered]@{
     medication      = 15
     test_catalogue  = 10
     analyte         = 25
-    staff           = 60
+    staff           = 86
     doctor_profile  = 50
     doctor_schedule = 250
 }
 
 $atLeast = [ordered]@{
-    patient      = 500
-    next_of_kin  = 280
-    appointment  = 5700
-    encounter    = 4470
-    diagnosis    = 6400
-    prescription = 8940
-    lab_order    = 6400
-    lab_result   = 11000
+    patient      = 20000
+    next_of_kin  = 11500
+    appointment  = 82000
+    encounter    = 62000
+    diagnosis    = 90000
+    prescription = 120000
+    lab_order    = 90000
+    lab_result   = 150000
 }
 
 try {

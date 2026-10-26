@@ -1,0 +1,212 @@
+SET
+============================================================
+Portfolio 2 - execution plans
+Database: hospital
+Captured: 2026-10-26 07:35:03
+Runs per query: 5 (summariser discards run 1)
+============================================================
+
+Server:
+                                                       version                                                        
+----------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+
+Dataset:
+  relation   | count  
+-------------+--------
+ appointment |  82000
+ diagnosis   |  93885
+ encounter   |  62588
+ lab_order   |  93885
+ lab_result  | 163387
+ patient     |  20000
+(6 rows)
+
+
+===== Q2 run 1 =====
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=405.70..407.21 rows=602 width=100) (actual time=22.030..22.037 rows=50 loops=1)
+   Sort Key: (count(*)) DESC, s.last_name
+   Sort Method: quicksort  Memory: 30kB
+   Buffers: shared hit=42
+   ->  HashAggregate  (cost=368.88..377.91 rows=602 width=100) (actual time=21.819..21.843 rows=50 loops=1)
+         Group Key: s.employee_no, s.first_name, s.last_name, dp.specialty
+         Batches: 1  Memory Usage: 49kB
+         Buffers: shared hit=39
+         ->  Hash Join  (cost=6.49..241.28 rows=4640 width=40) (actual time=0.571..8.562 rows=4900 loops=1)
+               Hash Cond: (dp.staff_id = s.staff_id)
+               Buffers: shared hit=39
+               ->  Hash Join  (cost=2.55..224.56 rows=4640 width=50) (actual time=0.399..5.731 rows=4900 loops=1)
+                     Hash Cond: (a.doctor_id = dp.staff_id)
+                     Buffers: shared hit=37
+                     ->  Index Only Scan using ix_appointment_slot_start on appointment a  (cost=0.42..209.22 rows=4640 width=20) (actual time=0.264..3.435 rows=4900 loops=1)
+                           Index Cond: ((slot_start >= (CURRENT_DATE - 7)) AND (slot_start < CURRENT_DATE))
+                           Heap Fetches: 0
+                           Buffers: shared hit=36
+                     ->  Hash  (cost=1.50..1.50 rows=50 width=30) (actual time=0.103..0.104 rows=50 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on doctor_profile dp  (cost=0.00..1.50 rows=50 width=30) (actual time=0.011..0.034 rows=50 loops=1)
+                                 Buffers: shared hit=1
+               ->  Hash  (cost=2.86..2.86 rows=86 width=38) (actual time=0.108..0.108 rows=86 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                     Buffers: shared hit=2
+                     ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=38) (actual time=0.010..0.043 rows=86 loops=1)
+                           Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=262
+ Planning Time: 6.781 ms
+ Execution Time: 22.207 ms
+(32 rows)
+
+===== Q2 run 2 =====
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=405.70..407.21 rows=602 width=100) (actual time=16.808..16.821 rows=50 loops=1)
+   Sort Key: (count(*)) DESC, s.last_name
+   Sort Method: quicksort  Memory: 30kB
+   Buffers: shared hit=36
+   ->  HashAggregate  (cost=368.88..377.91 rows=602 width=100) (actual time=16.538..16.597 rows=50 loops=1)
+         Group Key: s.employee_no, s.first_name, s.last_name, dp.specialty
+         Batches: 1  Memory Usage: 49kB
+         Buffers: shared hit=36
+         ->  Hash Join  (cost=6.49..241.28 rows=4640 width=40) (actual time=0.210..9.065 rows=4900 loops=1)
+               Hash Cond: (dp.staff_id = s.staff_id)
+               Buffers: shared hit=36
+               ->  Hash Join  (cost=2.55..224.56 rows=4640 width=50) (actual time=0.110..6.736 rows=4900 loops=1)
+                     Hash Cond: (a.doctor_id = dp.staff_id)
+                     Buffers: shared hit=34
+                     ->  Index Only Scan using ix_appointment_slot_start on appointment a  (cost=0.42..209.22 rows=4640 width=20) (actual time=0.051..2.490 rows=4900 loops=1)
+                           Index Cond: ((slot_start >= (CURRENT_DATE - 7)) AND (slot_start < CURRENT_DATE))
+                           Heap Fetches: 0
+                           Buffers: shared hit=33
+                     ->  Hash  (cost=1.50..1.50 rows=50 width=30) (actual time=0.051..0.052 rows=50 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on doctor_profile dp  (cost=0.00..1.50 rows=50 width=30) (actual time=0.013..0.027 rows=50 loops=1)
+                                 Buffers: shared hit=1
+               ->  Hash  (cost=2.86..2.86 rows=86 width=38) (actual time=0.083..0.084 rows=86 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                     Buffers: shared hit=2
+                     ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=38) (actual time=0.008..0.041 rows=86 loops=1)
+                           Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=19
+ Planning Time: 0.806 ms
+ Execution Time: 16.969 ms
+(32 rows)
+
+===== Q2 run 3 =====
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=405.70..407.21 rows=602 width=100) (actual time=15.475..15.487 rows=50 loops=1)
+   Sort Key: (count(*)) DESC, s.last_name
+   Sort Method: quicksort  Memory: 30kB
+   Buffers: shared hit=36
+   ->  HashAggregate  (cost=368.88..377.91 rows=602 width=100) (actual time=15.236..15.346 rows=50 loops=1)
+         Group Key: s.employee_no, s.first_name, s.last_name, dp.specialty
+         Batches: 1  Memory Usage: 49kB
+         Buffers: shared hit=36
+         ->  Hash Join  (cost=6.49..241.28 rows=4640 width=40) (actual time=0.214..8.491 rows=4900 loops=1)
+               Hash Cond: (dp.staff_id = s.staff_id)
+               Buffers: shared hit=36
+               ->  Hash Join  (cost=2.55..224.56 rows=4640 width=50) (actual time=0.135..5.613 rows=4900 loops=1)
+                     Hash Cond: (a.doctor_id = dp.staff_id)
+                     Buffers: shared hit=34
+                     ->  Index Only Scan using ix_appointment_slot_start on appointment a  (cost=0.42..209.22 rows=4640 width=20) (actual time=0.061..2.909 rows=4900 loops=1)
+                           Index Cond: ((slot_start >= (CURRENT_DATE - 7)) AND (slot_start < CURRENT_DATE))
+                           Heap Fetches: 0
+                           Buffers: shared hit=33
+                     ->  Hash  (cost=1.50..1.50 rows=50 width=30) (actual time=0.047..0.049 rows=50 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on doctor_profile dp  (cost=0.00..1.50 rows=50 width=30) (actual time=0.013..0.025 rows=50 loops=1)
+                                 Buffers: shared hit=1
+               ->  Hash  (cost=2.86..2.86 rows=86 width=38) (actual time=0.073..0.074 rows=86 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                     Buffers: shared hit=2
+                     ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=38) (actual time=0.007..0.033 rows=86 loops=1)
+                           Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=19
+ Planning Time: 0.795 ms
+ Execution Time: 15.685 ms
+(32 rows)
+
+===== Q2 run 4 =====
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=405.70..407.21 rows=602 width=100) (actual time=15.711..15.731 rows=50 loops=1)
+   Sort Key: (count(*)) DESC, s.last_name
+   Sort Method: quicksort  Memory: 30kB
+   Buffers: shared hit=36
+   ->  HashAggregate  (cost=368.88..377.91 rows=602 width=100) (actual time=15.589..15.619 rows=50 loops=1)
+         Group Key: s.employee_no, s.first_name, s.last_name, dp.specialty
+         Batches: 1  Memory Usage: 49kB
+         Buffers: shared hit=36
+         ->  Hash Join  (cost=6.49..241.28 rows=4640 width=40) (actual time=0.247..9.566 rows=4900 loops=1)
+               Hash Cond: (dp.staff_id = s.staff_id)
+               Buffers: shared hit=36
+               ->  Hash Join  (cost=2.55..224.56 rows=4640 width=50) (actual time=0.130..6.997 rows=4900 loops=1)
+                     Hash Cond: (a.doctor_id = dp.staff_id)
+                     Buffers: shared hit=34
+                     ->  Index Only Scan using ix_appointment_slot_start on appointment a  (cost=0.42..209.22 rows=4640 width=20) (actual time=0.060..3.785 rows=4900 loops=1)
+                           Index Cond: ((slot_start >= (CURRENT_DATE - 7)) AND (slot_start < CURRENT_DATE))
+                           Heap Fetches: 0
+                           Buffers: shared hit=33
+                     ->  Hash  (cost=1.50..1.50 rows=50 width=30) (actual time=0.058..0.061 rows=50 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on doctor_profile dp  (cost=0.00..1.50 rows=50 width=30) (actual time=0.015..0.032 rows=50 loops=1)
+                                 Buffers: shared hit=1
+               ->  Hash  (cost=2.86..2.86 rows=86 width=38) (actual time=0.109..0.109 rows=86 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                     Buffers: shared hit=2
+                     ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=38) (actual time=0.009..0.051 rows=86 loops=1)
+                           Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=19
+ Planning Time: 0.819 ms
+ Execution Time: 17.900 ms
+(32 rows)
+
+===== Q2 run 5 =====
+                                                                                  QUERY PLAN                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=405.70..407.21 rows=602 width=100) (actual time=20.539..20.551 rows=50 loops=1)
+   Sort Key: (count(*)) DESC, s.last_name
+   Sort Method: quicksort  Memory: 30kB
+   Buffers: shared hit=36
+   ->  HashAggregate  (cost=368.88..377.91 rows=602 width=100) (actual time=20.338..20.391 rows=50 loops=1)
+         Group Key: s.employee_no, s.first_name, s.last_name, dp.specialty
+         Batches: 1  Memory Usage: 49kB
+         Buffers: shared hit=36
+         ->  Hash Join  (cost=6.49..241.28 rows=4640 width=40) (actual time=0.310..13.481 rows=4900 loops=1)
+               Hash Cond: (dp.staff_id = s.staff_id)
+               Buffers: shared hit=36
+               ->  Hash Join  (cost=2.55..224.56 rows=4640 width=50) (actual time=0.191..10.278 rows=4900 loops=1)
+                     Hash Cond: (a.doctor_id = dp.staff_id)
+                     Buffers: shared hit=34
+                     ->  Index Only Scan using ix_appointment_slot_start on appointment a  (cost=0.42..209.22 rows=4640 width=20) (actual time=0.110..3.639 rows=4900 loops=1)
+                           Index Cond: ((slot_start >= (CURRENT_DATE - 7)) AND (slot_start < CURRENT_DATE))
+                           Heap Fetches: 0
+                           Buffers: shared hit=33
+                     ->  Hash  (cost=1.50..1.50 rows=50 width=30) (actual time=0.071..0.072 rows=50 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on doctor_profile dp  (cost=0.00..1.50 rows=50 width=30) (actual time=0.015..0.039 rows=50 loops=1)
+                                 Buffers: shared hit=1
+               ->  Hash  (cost=2.86..2.86 rows=86 width=38) (actual time=0.111..0.112 rows=86 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                     Buffers: shared hit=2
+                     ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=38) (actual time=0.011..0.055 rows=86 loops=1)
+                           Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=19
+ Planning Time: 0.964 ms
+ Execution Time: 20.680 ms
+(32 rows)
+

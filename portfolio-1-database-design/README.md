@@ -4,19 +4,19 @@
 
 ## Required Evidence
 
-- [ ] Case study description (see [`../docs/case-study.md`](../docs/case-study.md))
-- [ ] ER diagram (source + exported image)
-- [ ] Relational schema
-- [ ] Keys: primary, foreign, candidate, alternate, composite
-- [ ] Constraints: NOT NULL, UNIQUE, CHECK, FOREIGN KEY, defaults
-- [ ] Normalisation explanation (1NF → 2NF → 3NF)
+- [x] Case study description (see [`../docs/case-study.md`](../docs/case-study.md))
+- [x] ER diagram (source + exported image)
+- [x] Relational schema
+- [x] Keys: primary, foreign, candidate, alternate, composite
+- [x] Constraints: NOT NULL, UNIQUE, CHECK, FOREIGN KEY, defaults
+- [x] Normalisation explanation (1NF → 2NF → 3NF)
 
 ## Files
 
 | File | Purpose |
 |---|---|
 | `schema.sql` | DDL — 21 relations, types, keys, constraints, indexes |
-| `seed-data.sql` | Deterministic sample data. Everything downstream depends on this. |
+| `seed-data.sql` | Synthetic sample data at a volume that makes query plans meaningful. Everything downstream depends on this. |
 | `er-diagram.md` | Mermaid ER diagram (renders on GitHub) |
 | `er-diagram.png` | Exported image for the LMS document (2400 px, generated from the source above) |
 | `normalisation.md` | Step-by-step normalisation justification and design decisions |
@@ -45,14 +45,23 @@ Uses the Chrome already installed on the machine; Mermaid CLI does not download 
 ## Verified Row Counts
 
 ```
-patient 500 · staff 60 · doctor_profile 50 · appointment 5,700
-encounter 4,470 · prescription 8,940 · vitals 4,470
-diagnosis ~6,650 · lab_order ~6,650 · lab_result ~11,800 · audit_log ~15,000
+patient 20,000 · staff 86 · doctor_profile 50 · appointment 82,000
+encounter 62,588 · prescription 125,176 · vitals 62,588
+diagnosis ~93,850 · lab_order ~93,850 · lab_result ~164,000 · audit_log ~227,000
 ```
 
 Reference tables, appointments, encounters and prescriptions give identical counts on
-every run. The four hash-selected tables vary by a few per cent, because primary keys are
-random UUIDs and row selection hashes them.
+every run. The hash-selected tables (`next_of_kin`, `diagnosis`, `lab_order`,
+`lab_result`, `admission`) vary by a few per cent, because primary keys are random UUIDs
+and row selection hashes them.
+
+This is a **working sample**, not a full replica of the case-study hospital's ten-year
+history. The case study describes 250,000 patients; the seed loads 20,000, which is
+enough for the planner to choose between a sequential scan and an index. Loading the
+full figure would add several minutes to every rebuild without changing any plan
+conclusion. The per-day rates and distributions (700 appointments/day, 10% urgent lab
+orders, weighted ICD-10 frequencies) follow the case study; the row count is scaled to
+the Docker environment.
 
 Reproduce from scratch:
 
@@ -77,8 +86,8 @@ Put the answers in `normalisation.md` §5 or a `design-decisions.md` alongside i
 
 1. Write `schema.sql` from the ER model.
 2. Generate `seed-data.sql` — enough rows to make plans and indexes meaningful
-   (target: hundreds of patients, thousands of appointments, tens of thousands of
-   lab results; a 20-row table will not produce a measurable query plan).
+   (20,000 patients, 82,000 appointments, 164,000 lab results; a 20-row table will not
+   produce a measurable query plan).
 3. Run `docker compose up -d` and confirm both scripts execute cleanly.
 4. Verify constraints by attempting invalid inserts and capturing the errors.
 5. Export the ER diagram.

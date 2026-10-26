@@ -1,0 +1,162 @@
+SET
+============================================================
+Portfolio 2 - execution plans
+Database: hospital
+Captured: 2026-10-26 07:41:44
+Runs per query: 5 (summariser discards run 1)
+============================================================
+
+Server:
+                                                       version                                                        
+----------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+
+Dataset:
+  relation   | count  
+-------------+--------
+ appointment |  82000
+ diagnosis   |  93885
+ encounter   |  62588
+ lab_order   |  93885
+ lab_result  | 163387
+ patient     |  20000
+(6 rows)
+
+
+===== Q6 run 1 =====
+                                                                           QUERY PLAN                                                                           
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Subquery Scan on flagged  (cost=2296.99..2361.45 rows=573 width=72) (actual time=48.982..48.985 rows=0 loops=1)
+   Filter: (flagged.latest_previous_end > flagged.slot_start)
+   Rows Removed by Filter: 11800
+   Buffers: shared hit=303
+   ->  WindowAgg  (cost=2296.99..2339.96 rows=1719 width=72) (actual time=31.486..47.694 rows=11800 loops=1)
+         Buffers: shared hit=303
+         ->  Sort  (cost=2296.99..2301.28 rows=1719 width=48) (actual time=31.473..34.243 rows=11800 loops=1)
+               Sort Key: appointment.doctor_id, appointment.slot_start, appointment.appointment_id
+               Sort Method: quicksort  Memory: 1214kB
+               Buffers: shared hit=303
+               ->  Bitmap Heap Scan on appointment  (cost=411.68..2204.61 rows=1719 width=48) (actual time=13.582..18.340 rows=11800 loops=1)
+                     Recheck Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                     Filter: (status = ANY ('{BOOKED,ARRIVED,IN_PROGRESS}'::appointment_status[]))
+                     Heap Blocks: exact=220
+                     Buffers: shared hit=297
+                     ->  Bitmap Index Scan on ix_appointment_slot_start  (cost=0.00..411.25 rows=11883 width=0) (actual time=13.506..13.506 rows=11800 loops=1)
+                           Index Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                           Buffers: shared hit=77
+ Planning:
+   Buffers: shared hit=79
+ Planning Time: 1.192 ms
+ Execution Time: 49.289 ms
+(22 rows)
+
+===== Q6 run 2 =====
+                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Subquery Scan on flagged  (cost=2296.99..2361.45 rows=573 width=72) (actual time=46.992..46.994 rows=0 loops=1)
+   Filter: (flagged.latest_previous_end > flagged.slot_start)
+   Rows Removed by Filter: 11800
+   Buffers: shared hit=294
+   ->  WindowAgg  (cost=2296.99..2339.96 rows=1719 width=72) (actual time=30.570..45.649 rows=11800 loops=1)
+         Buffers: shared hit=294
+         ->  Sort  (cost=2296.99..2301.28 rows=1719 width=48) (actual time=30.555..33.121 rows=11800 loops=1)
+               Sort Key: appointment.doctor_id, appointment.slot_start, appointment.appointment_id
+               Sort Method: quicksort  Memory: 1214kB
+               Buffers: shared hit=294
+               ->  Bitmap Heap Scan on appointment  (cost=411.68..2204.61 rows=1719 width=48) (actual time=3.222..10.305 rows=11800 loops=1)
+                     Recheck Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                     Filter: (status = ANY ('{BOOKED,ARRIVED,IN_PROGRESS}'::appointment_status[]))
+                     Heap Blocks: exact=220
+                     Buffers: shared hit=294
+                     ->  Bitmap Index Scan on ix_appointment_slot_start  (cost=0.00..411.25 rows=11883 width=0) (actual time=3.167..3.167 rows=11800 loops=1)
+                           Index Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                           Buffers: shared hit=74
+ Planning:
+   Buffers: shared hit=4
+ Planning Time: 0.364 ms
+ Execution Time: 47.204 ms
+(22 rows)
+
+===== Q6 run 3 =====
+                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Subquery Scan on flagged  (cost=2296.99..2361.45 rows=573 width=72) (actual time=49.030..49.033 rows=0 loops=1)
+   Filter: (flagged.latest_previous_end > flagged.slot_start)
+   Rows Removed by Filter: 11800
+   Buffers: shared hit=294
+   ->  WindowAgg  (cost=2296.99..2339.96 rows=1719 width=72) (actual time=27.428..47.118 rows=11800 loops=1)
+         Buffers: shared hit=294
+         ->  Sort  (cost=2296.99..2301.28 rows=1719 width=48) (actual time=27.413..30.762 rows=11800 loops=1)
+               Sort Key: appointment.doctor_id, appointment.slot_start, appointment.appointment_id
+               Sort Method: quicksort  Memory: 1214kB
+               Buffers: shared hit=294
+               ->  Bitmap Heap Scan on appointment  (cost=411.68..2204.61 rows=1719 width=48) (actual time=8.351..14.219 rows=11800 loops=1)
+                     Recheck Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                     Filter: (status = ANY ('{BOOKED,ARRIVED,IN_PROGRESS}'::appointment_status[]))
+                     Heap Blocks: exact=220
+                     Buffers: shared hit=294
+                     ->  Bitmap Index Scan on ix_appointment_slot_start  (cost=0.00..411.25 rows=11883 width=0) (actual time=8.300..8.300 rows=11800 loops=1)
+                           Index Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                           Buffers: shared hit=74
+ Planning:
+   Buffers: shared hit=4
+ Planning Time: 0.417 ms
+ Execution Time: 49.290 ms
+(22 rows)
+
+===== Q6 run 4 =====
+                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Subquery Scan on flagged  (cost=2296.99..2361.45 rows=573 width=72) (actual time=40.339..40.341 rows=0 loops=1)
+   Filter: (flagged.latest_previous_end > flagged.slot_start)
+   Rows Removed by Filter: 11800
+   Buffers: shared hit=294
+   ->  WindowAgg  (cost=2296.99..2339.96 rows=1719 width=72) (actual time=24.205..39.135 rows=11800 loops=1)
+         Buffers: shared hit=294
+         ->  Sort  (cost=2296.99..2301.28 rows=1719 width=48) (actual time=24.192..26.544 rows=11800 loops=1)
+               Sort Key: appointment.doctor_id, appointment.slot_start, appointment.appointment_id
+               Sort Method: quicksort  Memory: 1214kB
+               Buffers: shared hit=294
+               ->  Bitmap Heap Scan on appointment  (cost=411.68..2204.61 rows=1719 width=48) (actual time=3.485..10.646 rows=11800 loops=1)
+                     Recheck Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                     Filter: (status = ANY ('{BOOKED,ARRIVED,IN_PROGRESS}'::appointment_status[]))
+                     Heap Blocks: exact=220
+                     Buffers: shared hit=294
+                     ->  Bitmap Index Scan on ix_appointment_slot_start  (cost=0.00..411.25 rows=11883 width=0) (actual time=3.442..3.442 rows=11800 loops=1)
+                           Index Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                           Buffers: shared hit=74
+ Planning:
+   Buffers: shared hit=4
+ Planning Time: 0.496 ms
+ Execution Time: 40.562 ms
+(22 rows)
+
+===== Q6 run 5 =====
+                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Subquery Scan on flagged  (cost=2296.99..2361.45 rows=573 width=72) (actual time=38.505..38.507 rows=0 loops=1)
+   Filter: (flagged.latest_previous_end > flagged.slot_start)
+   Rows Removed by Filter: 11800
+   Buffers: shared hit=294
+   ->  WindowAgg  (cost=2296.99..2339.96 rows=1719 width=72) (actual time=26.007..37.490 rows=11800 loops=1)
+         Buffers: shared hit=294
+         ->  Sort  (cost=2296.99..2301.28 rows=1719 width=48) (actual time=25.994..27.774 rows=11800 loops=1)
+               Sort Key: appointment.doctor_id, appointment.slot_start, appointment.appointment_id
+               Sort Method: quicksort  Memory: 1214kB
+               Buffers: shared hit=294
+               ->  Bitmap Heap Scan on appointment  (cost=411.68..2204.61 rows=1719 width=48) (actual time=3.776..8.351 rows=11800 loops=1)
+                     Recheck Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                     Filter: (status = ANY ('{BOOKED,ARRIVED,IN_PROGRESS}'::appointment_status[]))
+                     Heap Blocks: exact=220
+                     Buffers: shared hit=294
+                     ->  Bitmap Index Scan on ix_appointment_slot_start  (cost=0.00..411.25 rows=11883 width=0) (actual time=3.683..3.683 rows=11800 loops=1)
+                           Index Cond: ((slot_start >= CURRENT_DATE) AND (slot_start < (CURRENT_DATE + 60)))
+                           Buffers: shared hit=74
+ Planning:
+   Buffers: shared hit=4
+ Planning Time: 0.522 ms
+ Execution Time: 38.776 ms
+(22 rows)
+

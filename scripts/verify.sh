@@ -59,16 +59,26 @@ q() { docker compose exec -T postgres psql -U portfolio -d hospital -tAc "$1" 2>
 # The entrypoint runs the init scripts against a temporary server, then restarts.
 # "Ready" therefore does not mean "initialised"; wait for the data itself.
 settled=0
-for _ in $(seq 1 100); do
+for _ in $(seq 1 240); do
     t=$(q "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")
     p=$(q "SELECT count(*) FROM patient;")
-    if [ "$t" = "21" ] && [ "${p:-0}" -ge 500 ] 2>/dev/null; then settled=1; break; fi
+    a=$(q "SELECT count(*) FROM appointment;")
+    r=$(q "SELECT count(*) FROM lab_result;")
+    if [ "$t" = "21" ] && [ "${p:-0}" -ge 20000 ] && [ "${a:-0}" -ge 82000 ] && [ "${r:-0}" -ge 150000 ] 2>/dev/null; then
+        # The entrypoint may still be shutting the temporary server down.
+        # Wait through the restart and confirm the real server still answers.
+        sleep 15
+        r2=$(q "SELECT count(*) FROM lab_result;")
+        if [ "${r2:-0}" -ge 150000 ] 2>/dev/null; then
+            settled=1; break
+        fi
+    fi
     sleep 3
 done
 if [ "$settled" -eq 1 ]; then
     pass "initialisation complete (schema and seed data present)"
 else
-    fail "initialisation did not complete within 5 minutes"
+    fail "initialisation did not complete within 12 minutes"
     fail "inspect with: docker compose logs postgres"
 fi
 
@@ -96,18 +106,18 @@ check_exact icd_code 20
 check_exact medication 15
 check_exact test_catalogue 10
 check_exact analyte 25
-check_exact staff 60
+check_exact staff 86
 check_exact doctor_profile 50
 check_exact doctor_schedule 250
 
-check_min patient 500
-check_min next_of_kin 280
-check_min appointment 5700
-check_min encounter 4470
-check_min diagnosis 6400
-check_min prescription 8940
-check_min lab_order 6400
-check_min lab_result 11000
+check_min patient 20000
+check_min next_of_kin 11500
+check_min appointment 82000
+check_min encounter 62000
+check_min diagnosis 90000
+check_min prescription 120000
+check_min lab_order 90000
+check_min lab_result 150000
 
 section "MongoDB"
 if [ "$MONGO_RUNNING" -ne 1 ]; then

@@ -1,0 +1,152 @@
+SET
+============================================================
+Portfolio 2 - execution plans
+Database: hospital
+Captured: 2026-10-26 07:35:33
+Runs per query: 5 (summariser discards run 1)
+============================================================
+
+Server:
+                                                       version                                                        
+----------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+
+Dataset:
+  relation   | count  
+-------------+--------
+ appointment |  82000
+ diagnosis   |  93885
+ encounter   |  62588
+ lab_order   |  93885
+ lab_result  | 163387
+ patient     |  20000
+(6 rows)
+
+
+===== Q4 run 1 =====
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=5114.58..5122.24 rows=3064 width=48) (actual time=210.151..210.678 rows=3000 loops=1)
+   Sort Key: p.mrn
+   Sort Method: quicksort  Memory: 314kB
+   Buffers: shared hit=895
+   ->  Hash Right Anti Join  (cost=938.42..4937.16 rows=3064 width=48) (actual time=134.358..137.462 rows=3000 loops=1)
+         Hash Cond: (a.patient_id = p.patient_id)
+         Buffers: shared hit=895
+         ->  Index Only Scan using ix_appointment_patient_start on appointment a  (cost=0.42..3156.21 rows=69979 width=16) (actual time=0.765..33.957 rows=70000 loops=1)
+               Index Cond: ((slot_start >= (CURRENT_DATE - '1 year'::interval)) AND (slot_start < CURRENT_DATE))
+               Heap Fetches: 0
+               Buffers: shared hit=407
+         ->  Hash  (cost=688.00..688.00 rows=20000 width=64) (actual time=61.824..61.827 rows=20000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 2178kB
+               Buffers: shared hit=488
+               ->  Seq Scan on patient p  (cost=0.00..688.00 rows=20000 width=64) (actual time=0.186..14.905 rows=20000 loops=1)
+                     Buffers: shared hit=488
+ Planning:
+   Buffers: shared hit=164
+ Planning Time: 1.539 ms
+ Execution Time: 211.726 ms
+(20 rows)
+
+===== Q4 run 2 =====
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=5114.58..5122.24 rows=3064 width=48) (actual time=109.915..110.300 rows=3000 loops=1)
+   Sort Key: p.mrn
+   Sort Method: quicksort  Memory: 314kB
+   Buffers: shared hit=895
+   ->  Hash Right Anti Join  (cost=938.42..4937.16 rows=3064 width=48) (actual time=84.331..86.348 rows=3000 loops=1)
+         Hash Cond: (a.patient_id = p.patient_id)
+         Buffers: shared hit=895
+         ->  Index Only Scan using ix_appointment_patient_start on appointment a  (cost=0.42..3156.21 rows=69979 width=16) (actual time=0.056..28.778 rows=70000 loops=1)
+               Index Cond: ((slot_start >= (CURRENT_DATE - '1 year'::interval)) AND (slot_start < CURRENT_DATE))
+               Heap Fetches: 0
+               Buffers: shared hit=407
+         ->  Hash  (cost=688.00..688.00 rows=20000 width=64) (actual time=31.486..31.488 rows=20000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 2178kB
+               Buffers: shared hit=488
+               ->  Seq Scan on patient p  (cost=0.00..688.00 rows=20000 width=64) (actual time=0.019..15.844 rows=20000 loops=1)
+                     Buffers: shared hit=488
+ Planning:
+   Buffers: shared hit=18
+ Planning Time: 0.531 ms
+ Execution Time: 110.804 ms
+(20 rows)
+
+===== Q4 run 3 =====
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=5114.58..5122.24 rows=3064 width=48) (actual time=115.155..116.318 rows=3000 loops=1)
+   Sort Key: p.mrn
+   Sort Method: quicksort  Memory: 314kB
+   Buffers: shared hit=895
+   ->  Hash Right Anti Join  (cost=938.42..4937.16 rows=3064 width=48) (actual time=91.744..93.075 rows=3000 loops=1)
+         Hash Cond: (a.patient_id = p.patient_id)
+         Buffers: shared hit=895
+         ->  Index Only Scan using ix_appointment_patient_start on appointment a  (cost=0.42..3156.21 rows=69979 width=16) (actual time=0.082..32.981 rows=70000 loops=1)
+               Index Cond: ((slot_start >= (CURRENT_DATE - '1 year'::interval)) AND (slot_start < CURRENT_DATE))
+               Heap Fetches: 0
+               Buffers: shared hit=407
+         ->  Hash  (cost=688.00..688.00 rows=20000 width=64) (actual time=31.261..31.263 rows=20000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 2178kB
+               Buffers: shared hit=488
+               ->  Seq Scan on patient p  (cost=0.00..688.00 rows=20000 width=64) (actual time=0.019..11.520 rows=20000 loops=1)
+                     Buffers: shared hit=488
+ Planning:
+   Buffers: shared hit=18
+ Planning Time: 0.498 ms
+ Execution Time: 118.969 ms
+(20 rows)
+
+===== Q4 run 4 =====
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=5114.58..5122.24 rows=3064 width=48) (actual time=110.418..111.561 rows=3000 loops=1)
+   Sort Key: p.mrn
+   Sort Method: quicksort  Memory: 314kB
+   Buffers: shared hit=895
+   ->  Hash Right Anti Join  (cost=938.42..4937.16 rows=3064 width=48) (actual time=90.987..92.295 rows=3000 loops=1)
+         Hash Cond: (a.patient_id = p.patient_id)
+         Buffers: shared hit=895
+         ->  Index Only Scan using ix_appointment_patient_start on appointment a  (cost=0.42..3156.21 rows=69979 width=16) (actual time=0.050..38.136 rows=70000 loops=1)
+               Index Cond: ((slot_start >= (CURRENT_DATE - '1 year'::interval)) AND (slot_start < CURRENT_DATE))
+               Heap Fetches: 0
+               Buffers: shared hit=407
+         ->  Hash  (cost=688.00..688.00 rows=20000 width=64) (actual time=24.767..24.769 rows=20000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 2178kB
+               Buffers: shared hit=488
+               ->  Seq Scan on patient p  (cost=0.00..688.00 rows=20000 width=64) (actual time=0.021..10.045 rows=20000 loops=1)
+                     Buffers: shared hit=488
+ Planning:
+   Buffers: shared hit=18
+ Planning Time: 0.578 ms
+ Execution Time: 112.310 ms
+(20 rows)
+
+===== Q4 run 5 =====
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=5114.58..5122.24 rows=3064 width=48) (actual time=115.051..115.523 rows=3000 loops=1)
+   Sort Key: p.mrn
+   Sort Method: quicksort  Memory: 314kB
+   Buffers: shared hit=895
+   ->  Hash Right Anti Join  (cost=938.42..4937.16 rows=3064 width=48) (actual time=91.556..95.821 rows=3000 loops=1)
+         Hash Cond: (a.patient_id = p.patient_id)
+         Buffers: shared hit=895
+         ->  Index Only Scan using ix_appointment_patient_start on appointment a  (cost=0.42..3156.21 rows=69979 width=16) (actual time=0.056..30.810 rows=70000 loops=1)
+               Index Cond: ((slot_start >= (CURRENT_DATE - '1 year'::interval)) AND (slot_start < CURRENT_DATE))
+               Heap Fetches: 0
+               Buffers: shared hit=407
+         ->  Hash  (cost=688.00..688.00 rows=20000 width=64) (actual time=33.876..33.879 rows=20000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 2178kB
+               Buffers: shared hit=488
+               ->  Seq Scan on patient p  (cost=0.00..688.00 rows=20000 width=64) (actual time=0.018..12.217 rows=20000 loops=1)
+                     Buffers: shared hit=488
+ Planning:
+   Buffers: shared hit=18
+ Planning Time: 1.504 ms
+ Execution Time: 116.397 ms
+(20 rows)
+

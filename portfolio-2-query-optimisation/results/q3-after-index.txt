@@ -1,0 +1,227 @@
+SET
+============================================================
+Portfolio 2 - execution plans
+Database: hospital
+Captured: 2026-10-26 07:35:20
+Runs per query: 5 (summariser discards run 1)
+============================================================
+
+Server:
+                                                       version                                                        
+----------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+
+Dataset:
+  relation   | count  
+-------------+--------
+ appointment |  82000
+ diagnosis   |  93885
+ encounter   |  62588
+ lab_order   |  93885
+ lab_result  | 163387
+ patient     |  20000
+(6 rows)
+
+
+===== Q3 run 1 =====
+                                                                                       QUERY PLAN                                                                                       
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=867.20..867.22 rows=10 width=88) (actual time=112.829..112.868 rows=7 loops=1)
+   Sort Key: (round(avg((EXTRACT(epoch FROM (l.reported_at - l.collected_at)) / '3600'::numeric)), 2)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=81
+   ->  GroupAggregate  (cost=690.47..867.03 rows=10 width=88) (actual time=62.615..112.782 rows=7 loops=1)
+         Group Key: d.name
+         Buffers: shared hit=78
+         ->  Sort  (cost=690.47..705.16 rows=5878 width=32) (actual time=39.398..41.220 rows=8314 loops=1)
+               Sort Key: d.name
+               Sort Method: quicksort  Memory: 884kB
+               Buffers: shared hit=69
+               ->  Hash Join  (cost=5.45..322.47 rows=5878 width=32) (actual time=0.313..21.173 rows=8314 loops=1)
+                     Hash Cond: (s.department_id = d.department_id)
+                     Buffers: shared hit=69
+                     ->  Hash Join  (cost=4.22..299.28 rows=5878 width=18) (actual time=0.257..7.860 rows=8314 loops=1)
+                           Hash Cond: (l.ordered_by = s.staff_id)
+                           Buffers: shared hit=68
+                           ->  Index Only Scan using ix_lab_order_urgent_ordered_at on lab_order l  (cost=0.29..279.16 rows=5878 width=32) (actual time=0.112..3.464 rows=8314 loops=1)
+                                 Index Cond: (ordered_at >= (CURRENT_DATE - 90))
+                                 Heap Fetches: 0
+                                 Buffers: shared hit=66
+                           ->  Hash  (cost=2.86..2.86 rows=86 width=18) (actual time=0.111..0.113 rows=86 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 13kB
+                                 Buffers: shared hit=2
+                                 ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=18) (actual time=0.010..0.052 rows=86 loops=1)
+                                       Buffers: shared hit=2
+                     ->  Hash  (cost=1.10..1.10 rows=10 width=18) (actual time=0.037..0.038 rows=10 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on department d  (cost=0.00..1.10 rows=10 width=18) (actual time=0.018..0.022 rows=10 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=374
+ Planning Time: 2.572 ms
+ Execution Time: 113.222 ms
+(35 rows)
+
+===== Q3 run 2 =====
+                                                                                       QUERY PLAN                                                                                        
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=867.20..867.22 rows=10 width=88) (actual time=113.613..113.621 rows=7 loops=1)
+   Sort Key: (round(avg((EXTRACT(epoch FROM (l.reported_at - l.collected_at)) / '3600'::numeric)), 2)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=66
+   ->  GroupAggregate  (cost=690.47..867.03 rows=10 width=88) (actual time=52.243..113.553 rows=7 loops=1)
+         Group Key: d.name
+         Buffers: shared hit=66
+         ->  Sort  (cost=690.47..705.16 rows=5878 width=32) (actual time=47.951..59.931 rows=8314 loops=1)
+               Sort Key: d.name
+               Sort Method: quicksort  Memory: 884kB
+               Buffers: shared hit=66
+               ->  Hash Join  (cost=5.45..322.47 rows=5878 width=32) (actual time=0.127..32.151 rows=8314 loops=1)
+                     Hash Cond: (s.department_id = d.department_id)
+                     Buffers: shared hit=66
+                     ->  Hash Join  (cost=4.22..299.28 rows=5878 width=18) (actual time=0.093..27.953 rows=8314 loops=1)
+                           Hash Cond: (l.ordered_by = s.staff_id)
+                           Buffers: shared hit=65
+                           ->  Index Only Scan using ix_lab_order_urgent_ordered_at on lab_order l  (cost=0.29..279.16 rows=5878 width=32) (actual time=0.018..23.441 rows=8314 loops=1)
+                                 Index Cond: (ordered_at >= (CURRENT_DATE - 90))
+                                 Heap Fetches: 0
+                                 Buffers: shared hit=63
+                           ->  Hash  (cost=2.86..2.86 rows=86 width=18) (actual time=0.068..0.069 rows=86 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 13kB
+                                 Buffers: shared hit=2
+                                 ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=18) (actual time=0.006..0.035 rows=86 loops=1)
+                                       Buffers: shared hit=2
+                     ->  Hash  (cost=1.10..1.10 rows=10 width=18) (actual time=0.023..0.024 rows=10 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on department d  (cost=0.00..1.10 rows=10 width=18) (actual time=0.012..0.016 rows=10 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=8
+ Planning Time: 0.534 ms
+ Execution Time: 114.023 ms
+(35 rows)
+
+===== Q3 run 3 =====
+                                                                                       QUERY PLAN                                                                                        
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=867.20..867.22 rows=10 width=88) (actual time=98.105..98.113 rows=7 loops=1)
+   Sort Key: (round(avg((EXTRACT(epoch FROM (l.reported_at - l.collected_at)) / '3600'::numeric)), 2)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=66
+   ->  GroupAggregate  (cost=690.47..867.03 rows=10 width=88) (actual time=60.082..98.037 rows=7 loops=1)
+         Group Key: d.name
+         Buffers: shared hit=66
+         ->  Sort  (cost=690.47..705.16 rows=5878 width=32) (actual time=46.494..49.061 rows=8314 loops=1)
+               Sort Key: d.name
+               Sort Method: quicksort  Memory: 884kB
+               Buffers: shared hit=66
+               ->  Hash Join  (cost=5.45..322.47 rows=5878 width=32) (actual time=0.141..39.653 rows=8314 loops=1)
+                     Hash Cond: (s.department_id = d.department_id)
+                     Buffers: shared hit=66
+                     ->  Hash Join  (cost=4.22..299.28 rows=5878 width=18) (actual time=0.102..17.503 rows=8314 loops=1)
+                           Hash Cond: (l.ordered_by = s.staff_id)
+                           Buffers: shared hit=65
+                           ->  Index Only Scan using ix_lab_order_urgent_ordered_at on lab_order l  (cost=0.29..279.16 rows=5878 width=32) (actual time=0.022..12.953 rows=8314 loops=1)
+                                 Index Cond: (ordered_at >= (CURRENT_DATE - 90))
+                                 Heap Fetches: 0
+                                 Buffers: shared hit=63
+                           ->  Hash  (cost=2.86..2.86 rows=86 width=18) (actual time=0.071..0.073 rows=86 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 13kB
+                                 Buffers: shared hit=2
+                                 ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=18) (actual time=0.007..0.037 rows=86 loops=1)
+                                       Buffers: shared hit=2
+                     ->  Hash  (cost=1.10..1.10 rows=10 width=18) (actual time=0.030..0.031 rows=10 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on department d  (cost=0.00..1.10 rows=10 width=18) (actual time=0.019..0.022 rows=10 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=8
+ Planning Time: 0.710 ms
+ Execution Time: 98.409 ms
+(35 rows)
+
+===== Q3 run 4 =====
+                                                                                       QUERY PLAN                                                                                       
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=867.20..867.22 rows=10 width=88) (actual time=53.121..53.127 rows=7 loops=1)
+   Sort Key: (round(avg((EXTRACT(epoch FROM (l.reported_at - l.collected_at)) / '3600'::numeric)), 2)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=66
+   ->  GroupAggregate  (cost=690.47..867.03 rows=10 width=88) (actual time=27.389..53.064 rows=7 loops=1)
+         Group Key: d.name
+         Buffers: shared hit=66
+         ->  Sort  (cost=690.47..705.16 rows=5878 width=32) (actual time=24.429..26.669 rows=8314 loops=1)
+               Sort Key: d.name
+               Sort Method: quicksort  Memory: 884kB
+               Buffers: shared hit=66
+               ->  Hash Join  (cost=5.45..322.47 rows=5878 width=32) (actual time=0.122..13.627 rows=8314 loops=1)
+                     Hash Cond: (s.department_id = d.department_id)
+                     Buffers: shared hit=66
+                     ->  Hash Join  (cost=4.22..299.28 rows=5878 width=18) (actual time=0.090..9.654 rows=8314 loops=1)
+                           Hash Cond: (l.ordered_by = s.staff_id)
+                           Buffers: shared hit=65
+                           ->  Index Only Scan using ix_lab_order_urgent_ordered_at on lab_order l  (cost=0.29..279.16 rows=5878 width=32) (actual time=0.020..3.964 rows=8314 loops=1)
+                                 Index Cond: (ordered_at >= (CURRENT_DATE - 90))
+                                 Heap Fetches: 0
+                                 Buffers: shared hit=63
+                           ->  Hash  (cost=2.86..2.86 rows=86 width=18) (actual time=0.062..0.063 rows=86 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 13kB
+                                 Buffers: shared hit=2
+                                 ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=18) (actual time=0.007..0.034 rows=86 loops=1)
+                                       Buffers: shared hit=2
+                     ->  Hash  (cost=1.10..1.10 rows=10 width=18) (actual time=0.024..0.025 rows=10 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on department d  (cost=0.00..1.10 rows=10 width=18) (actual time=0.013..0.017 rows=10 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=8
+ Planning Time: 0.653 ms
+ Execution Time: 53.484 ms
+(35 rows)
+
+===== Q3 run 5 =====
+                                                                                       QUERY PLAN                                                                                       
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=867.20..867.22 rows=10 width=88) (actual time=41.742..41.748 rows=7 loops=1)
+   Sort Key: (round(avg((EXTRACT(epoch FROM (l.reported_at - l.collected_at)) / '3600'::numeric)), 2)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=66
+   ->  GroupAggregate  (cost=690.47..867.03 rows=10 width=88) (actual time=24.620..41.711 rows=7 loops=1)
+         Group Key: d.name
+         Buffers: shared hit=66
+         ->  Sort  (cost=690.47..705.16 rows=5878 width=32) (actual time=21.625..23.599 rows=8314 loops=1)
+               Sort Key: d.name
+               Sort Method: quicksort  Memory: 884kB
+               Buffers: shared hit=66
+               ->  Hash Join  (cost=5.45..322.47 rows=5878 width=32) (actual time=0.144..12.474 rows=8314 loops=1)
+                     Hash Cond: (s.department_id = d.department_id)
+                     Buffers: shared hit=66
+                     ->  Hash Join  (cost=4.22..299.28 rows=5878 width=18) (actual time=0.108..8.411 rows=8314 loops=1)
+                           Hash Cond: (l.ordered_by = s.staff_id)
+                           Buffers: shared hit=65
+                           ->  Index Only Scan using ix_lab_order_urgent_ordered_at on lab_order l  (cost=0.29..279.16 rows=5878 width=32) (actual time=0.023..3.758 rows=8314 loops=1)
+                                 Index Cond: (ordered_at >= (CURRENT_DATE - 90))
+                                 Heap Fetches: 0
+                                 Buffers: shared hit=63
+                           ->  Hash  (cost=2.86..2.86 rows=86 width=18) (actual time=0.077..0.078 rows=86 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 13kB
+                                 Buffers: shared hit=2
+                                 ->  Seq Scan on staff s  (cost=0.00..2.86 rows=86 width=18) (actual time=0.008..0.042 rows=86 loops=1)
+                                       Buffers: shared hit=2
+                     ->  Hash  (cost=1.10..1.10 rows=10 width=18) (actual time=0.029..0.029 rows=10 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on department d  (cost=0.00..1.10 rows=10 width=18) (actual time=0.016..0.020 rows=10 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=8
+ Planning Time: 0.598 ms
+ Execution Time: 41.969 ms
+(35 rows)
+
