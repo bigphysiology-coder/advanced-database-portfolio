@@ -12,7 +12,7 @@ This file is maintained as work progresses. It is not reconstructed at submissio
 
 | Tool | Version / model | Period of use |
 |---|---|---|
-| OpenCode (AI coding agent) | DeepSeek V4.1 Flash Free | 25-26 October 2026 |
+| OpenCode (AI coding agent) | DeepSeek V4.1 Flash Free | 25-27 October 2026 |
 
 ---
 
@@ -128,6 +128,58 @@ not a full replica.
 numbers. The all-query medians are more conservative and are the ones reported in
 the summary; the isolated figures are disclosed in the analysis where they differ
 materially.
+
+---
+
+### Entry 4 — 27 October 2026 — Transactions and concurrency
+
+**Tool:** OpenCode, model DeepSeek V4.1 Flash Free.
+
+**Task:** write and execute the Portfolio 3 transaction and concurrency tests, build a
+reproducible two-session capture harness, and document the observed behaviour.
+
+**Output used:** `transactions.sql`; five paired scenarios under
+`portfolio-3-transactions-concurrency/sessions/`; `sessions/monitor.sql`;
+`scripts/capture-p3.ps1`; the raw captures in `evidence/`; and the P3 `README.md` and
+`isolation-tests.md`.
+
+**Prompt (summarised):** "Using the existing Riverbend schema and seeded database, build
+real `COMMIT`, `ROLLBACK` and `SAVEPOINT` examples; demonstrate a concurrency anomaly and
+two control mechanisms; show an isolation-level difference; capture actual output from two
+simultaneous sessions rather than describing it; keep the production constraints intact."
+
+**Verification performed:** every scenario was executed against the live PostgreSQL 16.15
+container, not written from theory. The final evidence is the output of a complete re-run
+of `scripts/capture-p3.ps1`. Each claim in the README was checked against the raw files
+with `Select-String` before it was written: the `23P01`, `23514` and `40001` SQLSTATE
+codes, both session exit codes in `summary.csv`, the lock waits, and the pre/post row
+counts. After the run, the database was queried independently and matched the seeded
+counts of 20,000 patients, 82,000 appointments, 93,885 lab orders and 163,387 lab results,
+with no P3 test rows and no `p3_demo` schema left. The reproduction command was also run
+end-to-end more than once to confirm the harness is repeatable.
+
+**Corrections made:** the first pessimistic-lock script selected `doctor_id` from
+`doctor_profile`, but that table's primary key is `staff_id`; the failing run exposed it
+and the statement was corrected to `staff_id`. The savepoint was initially placed before
+the valid lab result, so `ROLLBACK TO SAVEPOINT` removed both results; it was moved after
+the valid row, which is the behaviour the test is meant to show. Windows PowerShell 5.1
+treated PostgreSQL `NOTICE` output on stderr as a terminating error; the capture functions
+now relax `ErrorActionPreference` for native calls and judge success by exit code. The
+`pg_stat_activity` sampler originally ran through `docker compose exec` from PowerShell,
+which took about 1.6 s per sample and delayed Session B past the interleaving; sampling now
+runs inside the container every ~300 ms. The exclusion scenario was lengthened to a 3 s
+hold so the block is visible in the monitor. A comment in the serializable write-skew
+script said B "commits" when PostgreSQL actually aborts the `UPDATE` and the `COMMIT`
+prints `ROLLBACK`; the narration was corrected to match the output.
+
+**Rejected / not used:** dropping `no_double_booking` from the production `appointment`
+table to demonstrate the anomaly — the baseline uses a separate structurally identical
+table that is dropped afterwards; cropped screenshots — raw logs include commands,
+timestamps, monitor samples and exit codes and can be diffed; the application-only
+availability check, which the anomaly test shows is insufficient; and `SELECT ... FOR
+UPDATE` as the adopted booking control, because it serialises every booking for the
+doctor. The exclusion constraint is adopted for appointments; `SERIALIZABLE` is retained
+for the multi-row on-call invariant, where an exclusion key does not exist.
 
 ---
 

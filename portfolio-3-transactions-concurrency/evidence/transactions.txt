@@ -1,0 +1,193 @@
+==============================================================================
+Portfolio 3 - single-session transaction tests
+==============================================================================
+Captured: 2026-10-27 10:21:26
+Command: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0 -f portfolio-3-transactions-concurrency/transactions.sql
+Exit: 0
+
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.747 ms
+
+============================================================
+Portfolio 3 - single-session transaction tests
+Server time:
+          server_time          
+-------------------------------
+ 2026-10-27 09:21:26.368102+00
+
+Time: 0.861 ms
+Server:
+                                                       version                                                        
+----------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
+Time: 0.536 ms
+============================================================
+Time: 4.590 ms
+Time: 1.006 ms
+Time: 86.217 ms
+
+Fixture keys:
+  patient  =  1ca7355d-3392-49e4-bcda-22ba5ccb4573
+  doctor   =  533e4daa-92d2-449a-b7d1-e9ee6961bae1
+  encounter=  001b981b-af11-409c-a6a9-647ee0bdf38c
+psql:/tmp/p3/transactions.sql:49: NOTICE:  42P06: schema "p3_demo" already exists, skipping
+LOCATION:  CreateSchemaCommand, schemacmds.c:132
+CREATE SCHEMA
+Time: 0.515 ms
+CREATE TABLE
+Time: 45.104 ms
+DELETE 0
+Time: 2.013 ms
+DELETE 0
+Time: 0.385 ms
+DELETE 0
+Time: 61.293 ms
+
+------------------------------------------------------------
+T1. COMMIT: appointment and audit row become visible together
+------------------------------------------------------------
+BEGIN
+Time: 0.294 ms
+INSERT 0 1
+Time: 21.723 ms
+Inserted inside transaction:  93e2ed0b-0036-4133-9c0f-414a329d441e
+ t1_appointment_rows_in_tx 
+---------------------------
+                         1
+
+Time: 0.766 ms
+ t1_audit_rows_in_tx 
+---------------------
+                   1
+
+Time: 0.956 ms
+ audit_id | action | table_name  |              record_id               
+----------+--------+-------------+--------------------------------------
+   227208 | INSERT | appointment | 93e2ed0b-0036-4133-9c0f-414a329d441e
+
+Time: 1.130 ms
+COMMIT
+Time: 18.944 ms
+After COMMIT:
+ t1_appointment_rows_after_commit 
+----------------------------------
+                                1
+
+Time: 0.742 ms
+ t1_audit_rows_after_commit 
+----------------------------
+                          1
+
+Time: 0.660 ms
+
+------------------------------------------------------------
+T2. ROLLBACK: second insert violates no_double_booking (23P01)
+------------------------------------------------------------
+BEGIN
+Time: 0.224 ms
+INSERT 0 1
+Time: 34.957 ms
+First insert succeeded inside transaction:  c9279876-04c9-4953-9d3b-85550434831f
+The next statement is expected to fail:
+psql:/tmp/p3/transactions.sql:135: ERROR:  23P01: conflicting key value violates exclusion constraint "no_double_booking"
+DETAIL:  Key (doctor_id, tstzrange(slot_start, slot_end, '[)'::text))=(533e4daa-92d2-449a-b7d1-e9ee6961bae1, ["2031-02-03 10:15:00+00","2031-02-03 10:45:00+00")) conflicts with existing key (doctor_id, tstzrange(slot_start, slot_end, '[)'::text))=(533e4daa-92d2-449a-b7d1-e9ee6961bae1, ["2031-02-03 10:00:00+00","2031-02-03 10:30:00+00")).
+SCHEMA NAME:  public
+TABLE NAME:  appointment
+CONSTRAINT NAME:  no_double_booking
+LOCATION:  check_exclusion_or_unique_constraint, execIndexing.c:874
+Time: 5.129 ms
+After the expected error the transaction is aborted; rolling back.
+ROLLBACK
+Time: 0.252 ms
+After ROLLBACK:
+ t2_first_rows_after_rollback 
+------------------------------
+                            0
+
+Time: 0.780 ms
+ t2_audit_rows_after_rollback 
+------------------------------
+                            0
+
+Time: 0.572 ms
+
+------------------------------------------------------------
+T3. SAVEPOINT: bad lab result rolled back, order survives
+------------------------------------------------------------
+BEGIN
+Time: 0.314 ms
+INSERT 0 1
+Time: 15.941 ms
+INSERT 0 1
+Time: 0.723 ms
+Order created:  b89a3fb0-89f2-4490-aea8-8604d4d304b0
+Inserting a valid result for analyte 1:
+INSERT 0 1
+Time: 20.431 ms
+SAVEPOINT
+Time: 0.159 ms
+Inserting an invalid result for analyte 2 (both numeric and text):
+psql:/tmp/p3/transactions.sql:194: ERROR:  23514: new row for relation "lab_result" violates check constraint "lab_result_value_present"
+DETAIL:  Failing row contains (347c16c7-748c-49b1-bfc7-9a61de8dc306, b89a3fb0-89f2-4490-aea8-8604d4d304b0, 2, 5.000, invalid-both, NORMAL, 2026-10-27 09:21:26.66086+00, 533e4daa-92d2-449a-b7d1-e9ee6961bae1).
+SCHEMA NAME:  public
+TABLE NAME:  lab_result
+CONSTRAINT NAME:  lab_result_value_present
+LOCATION:  ExecConstraints, execMain.c:2109
+Time: 1.145 ms
+Expected CHECK violation. Rolling back to the savepoint only:
+ROLLBACK
+Time: 0.446 ms
+ t3_results_after_savepoint_rollback 
+-------------------------------------
+                                   1
+
+Time: 0.606 ms
+Re-inserting the corrected result for analyte 2:
+INSERT 0 1
+Time: 3.550 ms
+COMMIT
+Time: 28.537 ms
+After COMMIT:
+ t3_order_rows 
+---------------
+             1
+
+Time: 0.614 ms
+ t3_result_rows 
+----------------
+              2
+
+Time: 0.436 ms
+ t3_invalid_rows 
+-----------------
+               0
+
+Time: 0.478 ms
+
+------------------------------------------------------------
+Cleanup of committed fixtures
+------------------------------------------------------------
+DELETE 1
+Time: 14.934 ms
+DELETE 1
+Time: 13.429 ms
+DELETE 1
+Time: 5.321 ms
+ t1_rows_after_cleanup 
+-----------------------
+                     0
+
+Time: 0.805 ms
+ t3_order_rows_after_cleanup 
+-----------------------------
+                           0
+
+Time: 0.483 ms
+Done.
+
+Evidence note: the T2 exclusion violation and the T3 CHECK violation are
+expected errors. The following statements prove that ROLLBACK and
+ROLLBACK TO SAVEPOINT removed exactly the intended rows.

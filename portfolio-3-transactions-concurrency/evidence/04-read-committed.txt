@@ -1,0 +1,120 @@
+==============================================================================
+Portfolio 3 - 04-read-committed - non-repeatable read under READ COMMITTED
+==============================================================================
+Captured: 2026-10-27 10:22:37
+Description: A reads the patient appointment count, B commits an insert, A reads again. The second read sees the new row.
+
+Two independent psql connections were used. Session B was launched
+1200 ms after A's launch; psql startup adds a short delay, so the
+timestamps printed by the sessions are the authoritative ordering.
+
+Commands:
+  A: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0 -v iso='READ COMMITTED' -f portfolio-3-transactions-concurrency/sessions/04-isolation-a.sql
+  B: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0 -v p3_slot='2031-03-05 09:00:00+00' -f portfolio-3-transactions-concurrency/sessions/04-isolation-b.sql
+
+--- SESSION A OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.918 ms
+=== SESSION A - repeated read under READ COMMITTED ===
+Time: 11.300 ms
+          a_started           
+------------------------------
+ 2026-10-27 09:22:20.26808+00
+
+Time: 0.522 ms
+BEGIN
+Time: 0.246 ms
+SET
+Time: 0.197 ms
+A first read:
+        a_first_read_at        
+-------------------------------
+ 2026-10-27 09:22:20.269079+00
+
+Time: 0.276 ms
+Time: 1.804 ms
+A holds the transaction open for 4 s while B inserts and commits:
+ pg_sleep 
+----------
+ 
+
+Time: 4006.779 ms (00:04.007)
+A second read:
+       a_second_read_at        
+-------------------------------
+ 2026-10-27 09:22:24.278664+00
+
+Time: 0.779 ms
+Time: 0.676 ms
+A RESULT isolation= READ COMMITTED  first= 5  second= 6
+ a_delta 
+---------
+       1
+
+Time: 0.501 ms
+COMMIT
+Time: 0.275 ms
+A after commit:
+ a_count_after_commit 
+----------------------
+                    6
+
+Time: 0.627 ms
+A finished.
+
+--- SESSION B OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.886 ms
+=== SESSION B - concurrent insert ===
+Time: 3.335 ms
+Time: 1.149 ms
+           b_started           
+-------------------------------
+ 2026-10-27 09:22:22.933422+00
+
+Time: 0.582 ms
+BEGIN
+Time: 0.223 ms
+B inserts one appointment and commits:
+INSERT 0 1
+Time: 33.027 ms
+COMMIT
+Time: 16.015 ms
+        b_committed_at         
+-------------------------------
+ 2026-10-27 09:22:22.983501+00
+
+Time: 0.353 ms
+B inserted appointment:  523c37e1-cffc-4519-9a66-ea2f78c05955
+B count for the patient:
+ b_count_for_patient 
+---------------------
+                   6
+
+Time: 1.357 ms
+B finished.
+
+--- pg_stat_activity MONITOR (~350 ms samples) ---
+sampled_at | pid | state | wait_type | wait_event | xact_age_s | query
+09:22:20.345 | 33137 | active | Timeout | PgSleep | 0.08 | SELECT pg_sleep(4);
+09:22:20.786 | 33137 | active | Timeout | PgSleep | 0.52 | SELECT pg_sleep(4);
+09:22:21.212 | 33137 | active | Timeout | PgSleep | 0.94 | SELECT pg_sleep(4);
+09:22:21.700 | 33137 | active | Timeout | PgSleep | 1.43 | SELECT pg_sleep(4);
+09:22:22.269 | 33137 | active | Timeout | PgSleep | 2.00 | SELECT pg_sleep(4);
+09:22:22.847 | 33137 | active | Timeout | PgSleep | 2.59 | SELECT pg_sleep(4);
+09:22:23.380 | 33137 | active | Timeout | PgSleep | 3.11 | SELECT pg_sleep(4);
+09:22:23.847 | 33137 | active | Timeout | PgSleep | 3.58 | SELECT pg_sleep(4);
+
+--- POST-RUN CHECK ---
+ test_rows_after_rc_run 
+------------------------
+                      1
+(1 row)
+
+
+Evidence note: the session logs are raw psql output. Expected errors
+(23P01, 40001) are not suppressed; they are the result being shown.

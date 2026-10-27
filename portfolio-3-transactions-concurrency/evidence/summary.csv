@@ -1,0 +1,8 @@
+scenario,session_a_exit,session_b_exit,post_run_check
+"01-unprotected","0","0","rows_for_slot_after_both_commits ---------------------------------- 2 (1 row)"
+"02-exclusion","0","0","rows_for_slot_after_race -------------------------- 1 (1 row)"
+"03-pessimistic","0","0","rows_for_slot_after_pessimistic_test -------------------------------------- 1 (1 row)"
+"04-read-committed","0","0","test_rows_after_rc_run ------------------------ 1 (1 row)"
+"05-repeatable-read","0","0","test_rows_after_rr_run ------------------------ 1 (1 row)"
+"06-write-skew-read-committed","0","0","doctors_on_duty_after_rc_write_skew ------------------------------------- 0 (1 row)"
+"07-write-skew-serializable","0","0","doctors_on_duty_after_serializable_write_skew ----------------------------------------------- 1 (1 row)"

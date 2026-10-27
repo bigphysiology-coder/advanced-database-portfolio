@@ -1,0 +1,18 @@
+============================================================
+Portfolio 3 - cleanup
+============================================================
+Fixtures are removed and the demo schema is dropped.
+
+SET
+DELETE 0
+DELETE 0
+psql:<stdin>:5: NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table p3_demo.booking_unprotected
+drop cascades to table p3_demo.on_call
+drop cascades to table p3_demo.lab_order_ids
+DROP SCHEMA
+ p3_test_appointments_left 
+---------------------------
+                         0
+(1 row)
+

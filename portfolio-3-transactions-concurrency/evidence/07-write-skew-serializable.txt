@@ -1,0 +1,135 @@
+==============================================================================
+Portfolio 3 - 07-write-skew-serializable - write skew prevented by SERIALIZABLE
+==============================================================================
+Captured: 2026-10-27 10:23:41
+Description: The same roster transactions at SERIALIZABLE. One transaction aborts with SQLSTATE 40001; one doctor remains on duty.
+
+Two independent psql connections were used. Session B was launched
+1200 ms after A's launch; psql startup adds a short delay, so the
+timestamps printed by the sessions are the authoritative ordering.
+
+Commands:
+  A: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0 -v iso='SERIALIZABLE' -f portfolio-3-transactions-concurrency/sessions/05-write-skew-a.sql
+  B: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0 -v iso='SERIALIZABLE' -f portfolio-3-transactions-concurrency/sessions/05-write-skew-b.sql
+
+--- SESSION A OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 1.370 ms
+=== SESSION A - write skew under SERIALIZABLE ===
+Time: 3.667 ms
+Time: 0.395 ms
+          a_started           
+------------------------------
+ 2026-10-27 09:23:28.24952+00
+
+Time: 0.305 ms
+BEGIN
+Time: 0.183 ms
+SET
+Time: 0.420 ms
+A checks the on-call roster:
+Time: 4.538 ms
+A sees on duty= 2
+A holds the transaction open for 4 s:
+ pg_sleep 
+----------
+ 
+
+Time: 4003.379 ms (00:04.003)
+A takes doctor A off duty:
+UPDATE 1
+Time: 66.012 ms
+A commits (under SERIALIZABLE this may be the transaction that aborts):
+COMMIT
+Time: 36.014 ms
+        a_committed_at         
+-------------------------------
+ 2026-10-27 09:23:32.360974+00
+
+Time: 0.364 ms
+On-duty count after A commit:
+ a_on_duty_after_commit 
+------------------------
+                      1
+
+Time: 0.444 ms
+A finished.
+
+--- SESSION B OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.879 ms
+=== SESSION B - write skew under SERIALIZABLE ===
+Time: 3.056 ms
+Time: 0.576 ms
+           b_started           
+-------------------------------
+ 2026-10-27 09:23:30.862363+00
+
+Time: 0.568 ms
+BEGIN
+Time: 0.292 ms
+SET
+Time: 0.298 ms
+B checks the on-call roster:
+Time: 20.769 ms
+B sees on duty= 2
+B holds the transaction open for 4 s:
+ pg_sleep 
+----------
+ 
+
+Time: 4004.937 ms (00:04.005)
+B takes doctor B off duty:
+psql:/tmp/p3/05-write-skew-b.sql:46: ERROR:  40001: could not serialize access due to read/write dependencies among transactions
+DETAIL:  Reason code: Canceled on identification as a pivot, during write.
+HINT:  The transaction might succeed if retried.
+LOCATION:  OnConflict_CheckForSerializationFailure, predicate.c:4603
+Time: 21.612 ms
+B attempts COMMIT (the UPDATE already aborted this transaction):
+ROLLBACK
+Time: 0.197 ms
+        b_committed_at         
+-------------------------------
+ 2026-10-27 09:23:34.911553+00
+
+Time: 0.249 ms
+Under SERIALIZABLE, the error above is the expected 40001.
+On-duty count after B commit attempt:
+ b_on_duty_after_commit 
+------------------------
+                      1
+
+Time: 0.419 ms
+B finished.
+
+--- pg_stat_activity MONITOR (~350 ms samples) ---
+sampled_at | pid | state | wait_type | wait_event | xact_age_s | query
+09:23:28.368 | 33826 | active | Timeout | PgSleep | 0.12 | SELECT pg_sleep(4);
+09:23:28.899 | 33826 | active | Timeout | PgSleep | 0.65 | SELECT pg_sleep(4);
+09:23:29.398 | 33826 | active | Timeout | PgSleep | 1.15 | SELECT pg_sleep(4);
+09:23:30.059 | 33826 | active | Timeout | PgSleep | 1.81 | SELECT pg_sleep(4);
+09:23:30.561 | 33826 | active | Timeout | PgSleep | 2.31 | SELECT pg_sleep(4);
+09:23:31.081 | 33826 | active | Timeout | PgSleep | 2.83 | SELECT pg_sleep(4);
+09:23:31.082 | 33862 | active | Timeout | PgSleep | 0.22 | SELECT pg_sleep(4);
+09:23:31.643 | 33826 | active | Timeout | PgSleep | 3.39 | SELECT pg_sleep(4);
+09:23:31.643 | 33862 | active | Timeout | PgSleep | 0.78 | SELECT pg_sleep(4);
+09:23:32.222 | 33826 | active | Timeout | PgSleep | 3.97 | SELECT pg_sleep(4);
+09:23:32.223 | 33862 | active | Timeout | PgSleep | 1.36 | SELECT pg_sleep(4);
+09:23:32.775 | 33862 | active | Timeout | PgSleep | 1.91 | SELECT pg_sleep(4);
+09:23:33.330 | 33862 | active | Timeout | PgSleep | 2.47 | SELECT pg_sleep(4);
+09:23:33.903 | 33862 | active | Timeout | PgSleep | 3.04 | SELECT pg_sleep(4);
+09:23:34.442 | 33862 | active | Timeout | PgSleep | 3.58 | SELECT pg_sleep(4);
+
+--- POST-RUN CHECK ---
+ doctors_on_duty_after_serializable_write_skew 
+-----------------------------------------------
+                                             1
+(1 row)
+
+
+Evidence note: the session logs are raw psql output. Expected errors
+(23P01, 40001) are not suppressed; they are the result being shown.

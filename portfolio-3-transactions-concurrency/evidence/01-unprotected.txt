@@ -1,0 +1,158 @@
+==============================================================================
+Portfolio 3 - 01-unprotected - double-booking anomaly without a database constraint
+==============================================================================
+Captured: 2026-10-27 10:21:43
+Description: Both sessions see the slot free and both commit a booking. This is the failure mode the exclusion constraint exists to prevent.
+
+Two independent psql connections were used. Session B was launched
+1200 ms after A's launch; psql startup adds a short delay, so the
+timestamps printed by the sessions are the authoritative ordering.
+
+Commands:
+  A: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0  -f portfolio-3-transactions-concurrency/sessions/01-unprotected-a.sql
+  B: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0  -f portfolio-3-transactions-concurrency/sessions/01-unprotected-b.sql
+
+--- SESSION A OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.834 ms
+=== SESSION A - unprotected booking ===
+Time: 3.421 ms
+Time: 1.361 ms
+           a_started           
+-------------------------------
+ 2026-10-27 09:21:31.028446+00
+
+Time: 0.537 ms
+BEGIN
+Time: 0.275 ms
+A checks availability:
+ a_sees_at_slot 
+----------------
+              0
+
+Time: 1.952 ms
+A keeps its transaction open for 3 s so B can check the same slot:
+ pg_sleep 
+----------
+ 
+
+Time: 3004.000 ms (00:03.004)
+INSERT 0 1
+Time: 1.347 ms
+A inserted booking:  26d2ac66-93b6-4f3a-a7da-3af4e85a6e29
+         a_inserted_at         
+-------------------------------
+ 2026-10-27 09:21:34.037005+00
+
+Time: 0.268 ms
+A waits 2 s before committing:
+ pg_sleep 
+----------
+ 
+
+Time: 2002.502 ms (00:02.003)
+COMMIT
+Time: 7.482 ms
+        a_committed_at         
+-------------------------------
+ 2026-10-27 09:21:36.047676+00
+
+Time: 0.490 ms
+A sees after its own commit:
+ a_rows_for_slot 
+-----------------
+               1
+
+Time: 0.506 ms
+A finished.
+
+--- SESSION B OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 1.083 ms
+=== SESSION B - unprotected booking ===
+Time: 3.089 ms
+Time: 0.994 ms
+           b_started           
+-------------------------------
+ 2026-10-27 09:21:33.376607+00
+
+Time: 0.656 ms
+BEGIN
+Time: 4.869 ms
+B checks availability while A is uncommitted:
+ b_sees_at_slot 
+----------------
+              0
+
+Time: 5.765 ms
+B keeps its transaction open for 3 s as well:
+ pg_sleep 
+----------
+ 
+
+Time: 3003.935 ms (00:03.004)
+INSERT 0 1
+Time: 0.745 ms
+B inserted booking:  d5907a95-d62b-4a70-9b5a-7166195be6d3
+         b_inserted_at         
+-------------------------------
+ 2026-10-27 09:21:36.392845+00
+
+Time: 0.254 ms
+B waits 2 s before committing:
+ pg_sleep 
+----------
+ 
+
+Time: 2004.294 ms (00:02.004)
+COMMIT
+Time: 34.265 ms
+        b_committed_at         
+-------------------------------
+ 2026-10-27 09:21:38.432871+00
+
+Time: 1.490 ms
+B sees after its own commit:
+ b_rows_for_slot 
+-----------------
+               2
+
+Time: 0.354 ms
+B finished. Two rows now occupy one slot.
+
+--- pg_stat_activity MONITOR (~350 ms samples) ---
+sampled_at | pid | state | wait_type | wait_event | xact_age_s | query
+09:21:31.419 | 32448 | active | Timeout | PgSleep | 0.39 | SELECT pg_sleep(3);
+09:21:31.842 | 32448 | active | Timeout | PgSleep | 0.81 | SELECT pg_sleep(3);
+09:21:32.327 | 32448 | active | Timeout | PgSleep | 1.30 | SELECT pg_sleep(3);
+09:21:32.889 | 32448 | active | Timeout | PgSleep | 1.86 | SELECT pg_sleep(3);
+09:21:33.406 | 32448 | active | Timeout | PgSleep | 2.38 | SELECT pg_sleep(3);
+09:21:33.407 | 32484 | active | Timeout | PgSleep | 0.03 | SELECT pg_sleep(3);
+09:21:33.991 | 32448 | active | Timeout | PgSleep | 2.96 | SELECT pg_sleep(3);
+09:21:33.991 | 32484 | active | Timeout | PgSleep | 0.61 | SELECT pg_sleep(3);
+09:21:34.529 | 32448 | active | Timeout | PgSleep | 3.50 | SELECT pg_sleep(2);
+09:21:34.529 | 32484 | active | Timeout | PgSleep | 1.15 | SELECT pg_sleep(3);
+09:21:34.981 | 32448 | active | Timeout | PgSleep | 3.95 | SELECT pg_sleep(2);
+09:21:34.981 | 32484 | active | Timeout | PgSleep | 1.60 | SELECT pg_sleep(3);
+09:21:35.502 | 32448 | active | Timeout | PgSleep | 4.47 | SELECT pg_sleep(2);
+09:21:35.502 | 32484 | active | Timeout | PgSleep | 2.12 | SELECT pg_sleep(3);
+09:21:35.986 | 32448 | active | Timeout | PgSleep | 4.96 | SELECT pg_sleep(2);
+09:21:35.986 | 32484 | active | Timeout | PgSleep | 2.61 | SELECT pg_sleep(3);
+09:21:36.538 | 32484 | active | Timeout | PgSleep | 3.16 | SELECT pg_sleep(2);
+09:21:37.080 | 32484 | active | Timeout | PgSleep | 3.70 | SELECT pg_sleep(2);
+09:21:37.541 | 32484 | active | Timeout | PgSleep | 4.16 | SELECT pg_sleep(2);
+09:21:38.167 | 32484 | active | Timeout | PgSleep | 4.79 | SELECT pg_sleep(2);
+
+--- POST-RUN CHECK ---
+ rows_for_slot_after_both_commits 
+----------------------------------
+                                2
+(1 row)
+
+
+Evidence note: the session logs are raw psql output. Expected errors
+(23P01, 40001) are not suppressed; they are the result being shown.

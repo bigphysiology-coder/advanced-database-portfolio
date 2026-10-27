@@ -1,0 +1,160 @@
+==============================================================================
+Portfolio 3 - 02-exclusion - double-booking prevented by no_double_booking
+==============================================================================
+Captured: 2026-10-27 10:22:00
+Description: The same race on the real appointment table. The second insert blocks on the GiST exclusion index, then raises SQLSTATE 23P01 after A commits.
+
+Two independent psql connections were used. Session B was launched
+1200 ms after A's launch; psql startup adds a short delay, so the
+timestamps printed by the sessions are the authoritative ordering.
+
+Commands:
+  A: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0  -f portfolio-3-transactions-concurrency/sessions/02-exclusion-a.sql
+  B: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0  -f portfolio-3-transactions-concurrency/sessions/02-exclusion-b.sql
+
+--- SESSION A OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.745 ms
+=== SESSION A - exclusion constraint, protected booking ===
+Time: 3.111 ms
+Time: 1.022 ms
+           a_started           
+-------------------------------
+ 2026-10-27 09:21:48.033625+00
+
+Time: 10.370 ms
+BEGIN
+Time: 0.281 ms
+A checks availability:
+ a_sees_at_slot 
+----------------
+              0
+
+Time: 1.927 ms
+A keeps its transaction open for 3 s so B can race it:
+ pg_sleep 
+----------
+ 
+
+Time: 3003.720 ms (00:03.004)
+INSERT 0 1
+Time: 20.704 ms
+A booked appointment:  69144708-9f73-4640-8f9c-7f5010490fab
+         a_inserted_at         
+-------------------------------
+ 2026-10-27 09:21:51.061344+00
+
+Time: 0.347 ms
+A waits 3 s before committing; B is blocked on the exclusion index:
+ pg_sleep 
+----------
+ 
+
+Time: 3002.036 ms (00:03.002)
+COMMIT
+Time: 29.553 ms
+        a_committed_at         
+-------------------------------
+ 2026-10-27 09:21:54.093774+00
+
+Time: 0.320 ms
+A sees after commit:
+            appointment_id            |       reason        | status 
+--------------------------------------+---------------------+--------
+ 69144708-9f73-4640-8f9c-7f5010490fab | P3 TEST exclusion A | BOOKED
+
+Time: 5.147 ms
+A finished.
+
+--- SESSION B OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.725 ms
+=== SESSION B - exclusion constraint, conflicting booking ===
+Time: 13.658 ms
+Time: 0.827 ms
+           b_started           
+-------------------------------
+ 2026-10-27 09:21:50.239332+00
+
+Time: 0.388 ms
+BEGIN
+Time: 0.169 ms
+B checks availability while A is uncommitted:
+ b_sees_at_slot 
+----------------
+              0
+
+Time: 1.838 ms
+B waits 2 s, then attempts the race:
+ pg_sleep 
+----------
+ 
+
+Time: 2006.947 ms (00:02.007)
+B attempts the overlapping insert; this should block, then fail with 23P01:
+      b_insert_attempt_at      
+-------------------------------
+ 2026-10-27 09:21:52.249607+00
+
+Time: 0.379 ms
+psql:/tmp/p3/02-exclusion-b.sql:47: ERROR:  23P01: conflicting key value violates exclusion constraint "no_double_booking"
+DETAIL:  Key (doctor_id, tstzrange(slot_start, slot_end, '[)'::text))=(533e4daa-92d2-449a-b7d1-e9ee6961bae1, ["2031-03-04 09:00:00+00","2031-03-04 09:30:00+00")) conflicts with existing key (doctor_id, tstzrange(slot_start, slot_end, '[)'::text))=(533e4daa-92d2-449a-b7d1-e9ee6961bae1, ["2031-03-04 09:00:00+00","2031-03-04 09:30:00+00")).
+SCHEMA NAME:  public
+TABLE NAME:  appointment
+CONSTRAINT NAME:  no_double_booking
+LOCATION:  check_exclusion_or_unique_constraint, execIndexing.c:874
+Time: 1853.423 ms (00:01.853)
+If the constraint worked, the line above is an error and no id was stored.
+psql:/tmp/p3/02-exclusion-b.sql:50: ERROR:  25P02: current transaction is aborted, commands ignored until end of transaction block
+LOCATION:  exec_simple_query, postgres.c:1140
+Time: 0.432 ms
+ROLLBACK
+Time: 0.173 ms
+B rolled back its failed transaction. Rows for the slot now:
+            appointment_id            |       reason        | status 
+--------------------------------------+---------------------+--------
+ 69144708-9f73-4640-8f9c-7f5010490fab | P3 TEST exclusion A | BOOKED
+
+Time: 0.609 ms
+ b_rows_for_slot 
+-----------------
+               1
+
+Time: 0.555 ms
+B finished. The database, not the application, enforced the invariant.
+
+--- pg_stat_activity MONITOR (~350 ms samples) ---
+sampled_at | pid | state | wait_type | wait_event | xact_age_s | query
+09:21:48.068 | 32693 | active | Timeout | PgSleep | 0.03 | SELECT pg_sleep(3);
+09:21:48.576 | 32693 | active | Timeout | PgSleep | 0.54 | SELECT pg_sleep(3);
+09:21:49.043 | 32693 | active | Timeout | PgSleep | 1.01 | SELECT pg_sleep(3);
+09:21:49.575 | 32693 | active | Timeout | PgSleep | 1.54 | SELECT pg_sleep(3);
+09:21:50.069 | 32693 | active | Timeout | PgSleep | 2.04 | SELECT pg_sleep(3);
+09:21:50.611 | 32693 | active | Timeout | PgSleep | 2.58 | SELECT pg_sleep(3);
+09:21:50.611 | 32731 | active | Timeout | PgSleep | 0.37 | SELECT pg_sleep(2);
+09:21:51.216 | 32693 | active | Timeout | PgSleep | 3.18 | SELECT pg_sleep(3);
+09:21:51.217 | 32731 | active | Timeout | PgSleep | 0.98 | SELECT pg_sleep(2);
+09:21:51.763 | 32693 | active | Timeout | PgSleep | 3.73 | SELECT pg_sleep(3);
+09:21:51.765 | 32731 | active | Timeout | PgSleep | 1.53 | SELECT pg_sleep(2);
+09:21:52.252 | 32693 | active | Timeout | PgSleep | 4.22 | SELECT pg_sleep(3);
+09:21:52.253 | 32731 | active | IO | DataFileRead | 2.01 | INSERT INTO appointment (patient_id, doctor_id, slot_start, slot_end, 
+09:21:52.690 | 32693 | active | Timeout | PgSleep | 4.66 | SELECT pg_sleep(3);
+09:21:52.692 | 32731 | active | Lock | transactionid | 2.45 | INSERT INTO appointment (patient_id, doctor_id, slot_start, slot_end, 
+09:21:53.230 | 32693 | active | Timeout | PgSleep | 5.20 | SELECT pg_sleep(3);
+09:21:53.230 | 32731 | active | Lock | transactionid | 2.99 | INSERT INTO appointment (patient_id, doctor_id, slot_start, slot_end, 
+09:21:53.668 | 32693 | active | Timeout | PgSleep | 5.64 | SELECT pg_sleep(3);
+09:21:53.669 | 32731 | active | Lock | transactionid | 3.43 | INSERT INTO appointment (patient_id, doctor_id, slot_start, slot_end, 
+
+--- POST-RUN CHECK ---
+ rows_for_slot_after_race 
+--------------------------
+                        1
+(1 row)
+
+
+Evidence note: the session logs are raw psql output. Expected errors
+(23P01, 40001) are not suppressed; they are the result being shown.

@@ -1,0 +1,143 @@
+==============================================================================
+Portfolio 3 - 03-pessimistic - pessimistic control with SELECT ... FOR UPDATE
+==============================================================================
+Captured: 2026-10-27 10:22:16
+Description: Session A locks the doctor row. B blocks until A commits, then re-checks availability and abandons its own booking. The monitor records the lock wait.
+
+Two independent psql connections were used. Session B was launched
+1200 ms after A's launch; psql startup adds a short delay, so the
+timestamps printed by the sessions are the authoritative ordering.
+
+Commands:
+  A: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0  -f portfolio-3-transactions-concurrency/sessions/03-pessimistic-a.sql
+  B: docker compose exec -T postgres psql -U portfolio -d hospital -X -v ON_ERROR_STOP=0  -f portfolio-3-transactions-concurrency/sessions/03-pessimistic-b.sql
+
+--- SESSION A OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.655 ms
+=== SESSION A - pessimistic lock holder ===
+Time: 15.133 ms
+Time: 1.121 ms
+           a_started           
+-------------------------------
+ 2026-10-27 09:22:05.920629+00
+
+Time: 0.501 ms
+BEGIN
+Time: 0.247 ms
+A locks the doctor row:
+               staff_id               
+--------------------------------------
+ 533e4daa-92d2-449a-b7d1-e9ee6961bae1
+
+Time: 1.022 ms
+        a_lock_acquired        
+-------------------------------
+ 2026-10-27 09:22:05.922599+00
+
+Time: 0.351 ms
+A holds the lock for 3 s:
+ pg_sleep 
+----------
+ 
+
+Time: 3000.686 ms (00:03.001)
+INSERT 0 1
+Time: 17.944 ms
+A booked appointment:  8d13ea14-c351-4f18-aad1-e2e443760bd1
+         a_inserted_at         
+-------------------------------
+ 2026-10-27 09:22:08.941972+00
+
+Time: 0.377 ms
+A waits 1 s, then commits and releases the lock:
+ pg_sleep 
+----------
+ 
+
+Time: 1006.646 ms (00:01.007)
+COMMIT
+Time: 18.907 ms
+        a_committed_at         
+-------------------------------
+ 2026-10-27 09:22:09.963251+00
+
+Time: 0.467 ms
+A finished.
+
+--- SESSION B OUTPUT (exit 0) ---
+Pager usage is off.
+Timing is on.
+SET
+Time: 0.718 ms
+=== SESSION B - pessimistic lock waiter ===
+Time: 2.772 ms
+           b_started           
+-------------------------------
+ 2026-10-27 09:22:08.038592+00
+
+Time: 0.471 ms
+BEGIN
+Time: 10.300 ms
+B tries to lock the same doctor row; it should block here:
+Time: 0.309 ms
+               staff_id               
+--------------------------------------
+ 533e4daa-92d2-449a-b7d1-e9ee6961bae1
+
+Time: 1916.925 ms (00:01.917)
+Time: 0.387 ms
+B acquired the lock after A committed.
+ b_lock_wait_seconds 
+---------------------
+               1.913
+
+Time: 0.740 ms
+B re-checks availability and sees A booking:
+ b_sees_booked_rows 
+--------------------
+                  1
+
+Time: 2.912 ms
+            appointment_id            |        reason         
+--------------------------------------+-----------------------
+ 8d13ea14-c351-4f18-aad1-e2e443760bd1 | P3 TEST pessimistic A
+
+Time: 0.766 ms
+B abandons its booking attempt:
+ROLLBACK
+Time: 0.351 ms
+         b_finished_at         
+-------------------------------
+ 2026-10-27 09:22:09.967745+00
+
+Time: 0.365 ms
+B finished.
+
+--- pg_stat_activity MONITOR (~350 ms samples) ---
+sampled_at | pid | state | wait_type | wait_event | xact_age_s | query
+09:22:06.075 | 32933 | active | Timeout | PgSleep | 0.15 | SELECT pg_sleep(3);
+09:22:06.514 | 32933 | active | Timeout | PgSleep | 0.59 | SELECT pg_sleep(3);
+09:22:06.936 | 32933 | active | Timeout | PgSleep | 1.02 | SELECT pg_sleep(3);
+09:22:07.451 | 32933 | active | Timeout | PgSleep | 1.53 | SELECT pg_sleep(3);
+09:22:07.938 | 32933 | active | Timeout | PgSleep | 2.02 | SELECT pg_sleep(3);
+09:22:08.495 | 32933 | active | Timeout | PgSleep | 2.57 | SELECT pg_sleep(3);
+09:22:08.495 | 32965 | active | Lock | transactionid | 0.45 | SELECT staff_id FROM doctor_profile WHERE staff_id = '533e4daa-92d2-44
+09:22:08.904 | 32933 | active | Timeout | PgSleep | 2.98 | SELECT pg_sleep(3);
+09:22:08.904 | 32965 | active | Lock | transactionid | 0.86 | SELECT staff_id FROM doctor_profile WHERE staff_id = '533e4daa-92d2-44
+09:22:09.403 | 32933 | active | Timeout | PgSleep | 3.49 | SELECT pg_sleep(1);
+09:22:09.413 | 32965 | active | Lock | transactionid | 1.37 | SELECT staff_id FROM doctor_profile WHERE staff_id = '533e4daa-92d2-44
+09:22:09.937 | 32933 | active | Timeout | PgSleep | 4.02 | SELECT pg_sleep(1);
+09:22:09.937 | 32965 | active | Lock | transactionid | 1.89 | SELECT staff_id FROM doctor_profile WHERE staff_id = '533e4daa-92d2-44
+
+--- POST-RUN CHECK ---
+ rows_for_slot_after_pessimistic_test 
+--------------------------------------
+                                    1
+(1 row)
+
+
+Evidence note: the session logs are raw psql output. Expected errors
+(23P01, 40001) are not suppressed; they are the result being shown.

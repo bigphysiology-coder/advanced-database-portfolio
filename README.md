@@ -67,7 +67,7 @@ Relevant because the repository is public.
 |---|---|---|---|---|
 | 1 | Database Design and Modelling | 7 | [`portfolio-1-database-design/`](portfolio-1-database-design/) | complete |
 | 2 | Query Processing and Optimisation | 7 | [`portfolio-2-query-optimisation/`](portfolio-2-query-optimisation/) | complete |
-| 3 | Transactions and Concurrency | 7 | [`portfolio-3-transactions-concurrency/`](portfolio-3-transactions-concurrency/) | _pending_ |
+| 3 | Transactions and Concurrency | 7 | [`portfolio-3-transactions-concurrency/`](portfolio-3-transactions-concurrency/) | complete |
 | 4 | NoSQL and Advanced Data Models | 7 | [`portfolio-4-nosql/`](portfolio-4-nosql/) | _pending_ |
 | 5 | Distributed and Cloud Database | 6 | [`portfolio-5-distributed-cloud/`](portfolio-5-distributed-cloud/) | _pending_ |
 | — | Final Documentation and Reflection | 6 | [`final-documentation/`](final-documentation/) | _pending_ |
@@ -88,6 +88,9 @@ advanced-database-portfolio/
 │   ├── verify.ps1             <- environment check: containers, schema, seed counts
 │   ├── verify.sh              <- same, for macOS/Linux/WSL
 │   ├── export-diagram.ps1     <- regenerates er-diagram.png from the Mermaid source
+│   ├── capture-plans.ps1      <- P2 execution-plan capture
+│   ├── summarise-plans.ps1    <- P2 plan summary and medians
+│   ├── capture-p3.ps1         <- P3 two-session evidence capture and cleanup
 │   └── puppeteer.json         <- renderer config (uses system Chrome, no Chromium download)
 ├── portfolio-1-database-design/
 │   ├── schema.sql                     <- DDL: 21 relations, keys, constraints, triggers
@@ -103,10 +106,11 @@ advanced-database-portfolio/
 │   ├── execution-plans.md     <- EXPLAIN ANALYZE before/after + timings
 │   └── results/
 ├── portfolio-3-transactions-concurrency/
-│   ├── transactions.sql       <- COMMIT / ROLLBACK examples
-│   ├── session-a.sql          <- concurrent session 1
-│   ├── session-b.sql          <- concurrent session 2
-│   └── isolation-tests.md     <- anomaly demonstrated + fix
+│   ├── transactions.sql       <- COMMIT / ROLLBACK / SAVEPOINT tests
+│   ├── sessions/              <- five paired two-session scenarios + monitor.sql
+│   ├── evidence/              <- raw psql captures and summary.csv
+│   ├── README.md              <- overview, results and mechanism comparison
+│   └── isolation-tests.md     <- detailed test record with actual output
 ├── portfolio-4-nosql/
 │   ├── mongodb-setup.js       <- collection, validator, indexes, queries
 │   ├── model-design.md        <- suitability argument
@@ -237,8 +241,10 @@ Every claim in this repository must be backed by output that was actually produc
 
 - Query timings: raw `EXPLAIN (ANALYZE, BUFFERS)` output, not a paraphrased summary.
 - Concurrency: two live sessions with visible interleaving, not a theoretical description.
-- Screenshots: committed under the relevant portfolio folder, with the command visible.
-- No screenshot appears in the documentation unless the command that produced it is in the repo.
+- Evidence: screenshots or raw terminal captures committed under the relevant portfolio
+  folder, with the command and exit status visible.
+- No screenshot or capture appears in the documentation unless the command that produced
+  it is in the repo.
 
 ---
 
@@ -305,4 +311,7 @@ Work is committed progressively rather than in a single final upload.
 
 | Date | Portfolio | What was done |
 |---|---|---|
-| | | |
+| 25 Oct 2026 | P1 | Case study, 21-relation schema, normalisation notes, synthetic seed data, ER diagram source, 10 constraint tests, Docker environment and verification scripts. |
+| 26 Oct 2026 | P1 | Exported the ER diagram to PNG and added the reproducible export script; corrected the determinism note. |
+| 26 Oct 2026 | P2 | Six business queries, seven accepted indexes with one rejected, baseline and 21-run final plans, loaded-host variance control, optimisation analysis. |
+| 27 Oct 2026 | P3 | `COMMIT`, `ROLLBACK` and `SAVEPOINT` tests; five two-session scenarios covering double-booking, exclusion, pessimistic locking, isolation levels and write skew; raw evidence capture and analysis. |
