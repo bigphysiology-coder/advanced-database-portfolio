@@ -1,0 +1,95 @@
+﻿=== PostgreSQL export, MongoDB import and transform ===
+captured: 2026-10-28 19:11:52 +01:00
+host: RASHEED-PC
+
+=== Portfolio 4 loader ===
+mongosh: host binary (C:\Users\owner\AppData\Local\Temp\opencode\mongosh\mongosh-2.2.12-win32-x64\bin\mongosh.exe) -> localhost:27017
+exported lab_results.ndjson (92.5 MB)
+exported patient_refs.ndjson (1.0 MB)
+source: 93885 lab orders, 15200 patients with lab orders
+running mongodb-setup.js
+updated validator on lab_results
+{
+  collections: [
+    'lab_results',
+    'patient_refs'
+  ],
+  lab_results_documents: 93885,
+  patient_refs_documents: 15200,
+  indexes: [
+    '_id_',
+    'ix_collected',
+    'ix_patient_analyte_collected',
+    'ix_patient_collected',
+    'ix_result_flag_collected',
+    'ix_status_priority_collected',
+    'ux_order_id'
+  ]
+}
+mongoimport not present; importing lab_results_raw with mongosh
+running load-ndjson.js
+  loaded 10000
+  loaded 20000
+  loaded 30000
+  loaded 40000
+  loaded 50000
+  loaded 60000
+  loaded 70000
+  loaded 80000
+  loaded 90000
+staging documents: 93885
+importing patient_refs with mongosh
+patient_refs documents: 15200
+staged: 93885 lab orders, 15200 patient references
+dropped before bulk merge: ix_patient_collected, ix_status_priority_collected, ix_result_flag_collected, ix_patient_analyte_collected, ix_collected
+running transform-lab-results.js
+raw documents: 93885
+target documents before transform: 93885
+target documents after transform: 93885
+[
+  {
+    _id: 'COLLECTED',
+    orders: 9360,
+    results: 0
+  },
+  {
+    _id: 'IN_PROGRESS',
+    orders: 9500,
+    results: 0
+  },
+  {
+    _id: 'ORDERED',
+    orders: 9494,
+    results: 0
+  },
+  {
+    _id: 'REPORTED',
+    orders: 65531,
+    results: 163387
+  }
+]
+dropped staging collection lab_results_raw
+recreating the secondary indexes
+running mongodb-setup.js
+updated validator on lab_results
+{
+  collections: [
+    'lab_results',
+    'patient_refs'
+  ],
+  lab_results_documents: 93885,
+  patient_refs_documents: 15200,
+  indexes: [
+    '_id_',
+    'ix_collected',
+    'ix_patient_analyte_collected',
+    'ix_patient_collected',
+    'ix_result_flag_collected',
+    'ix_status_priority_collected',
+    'ux_order_id'
+  ]
+}
+
+Portfolio 4 load complete.
+
+exit: 0 (elapsed 319.6s)

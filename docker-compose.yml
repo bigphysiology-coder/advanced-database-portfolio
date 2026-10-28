@@ -34,8 +34,15 @@ services:
       - "27017:27017"
     volumes:
       - mongodata:/data/db
-      # Uncomment once mongodb-setup.js is written:
-      # - ./portfolio-4-nosql/mongodb-setup.js:/docker-entrypoint-initdb.d/01-setup.js:ro
+      # Runs once, on an empty data directory, against MONGO_INITDB_DATABASE.
+      # The loader runs the same script again, so a database created without
+      # this mount still ends up with the validator and indexes.
+      - ./portfolio-4-nosql/mongodb-setup.js:/docker-entrypoint-initdb.d/01-setup.js:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' -u portfolio -p portfolio --authenticationDatabase admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
 volumes:
   pgdata:

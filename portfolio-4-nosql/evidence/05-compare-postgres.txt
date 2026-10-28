@@ -1,0 +1,276 @@
+﻿=== PostgreSQL equivalents with \timing ===
+captured: 2026-10-28 19:18:30 +01:00
+host: RASHEED-PC
+
+Pager usage is off.
+Timing is on.
+
+=== PG-Q1. One patient's lab history (MRN-0003927), three runs ===
+             lab_order_id             | test_code |  status  |      collected_at      |      reported_at       | result_count 
+--------------------------------------+-----------+----------+------------------------+------------------------+--------------
+ 599af456-0bb2-4001-9cbb-4a9334cfcb3a | LIPID     | REPORTED | 2026-10-23 14:10:00+00 | 2026-10-24 02:10:00+00 |            4
+ 4a932e20-2aa2-46c3-ab11-9a3309bcd9c2 | LIPID     | REPORTED | 2026-09-29 12:10:00+00 | 2026-09-30 00:10:00+00 |            4
+ 9a4a65f1-3bb9-4254-a2b8-a9934ac8aa3c | LIPID     | REPORTED | 2026-09-29 12:10:00+00 | 2026-09-30 00:10:00+00 |            4
+ 012f5a42-9b97-4a46-9404-544e957e71be | COAG      | REPORTED | 2026-09-05 10:10:00+00 | 2026-09-05 16:10:00+00 |            2
+ 34f4be12-076b-40e0-a1c4-4ef89b178605 | LIPID     | REPORTED | 2026-08-11 15:10:00+00 | 2026-08-12 03:10:00+00 |            4
+ 5b2ddc62-18c1-49b6-a0e9-77be772e6d44 | COAG      | REPORTED | 2026-08-11 15:10:00+00 | 2026-08-11 21:10:00+00 |            2
+ 7b942660-5c6b-4096-8e2e-be6b30d5a701 | LIPID     | REPORTED | 2026-07-18 13:10:00+00 | 2026-07-19 01:10:00+00 |            4
+
+Time: 796.259 ms
+             lab_order_id             | test_code |  status  |      collected_at      |      reported_at       | result_count 
+--------------------------------------+-----------+----------+------------------------+------------------------+--------------
+ 599af456-0bb2-4001-9cbb-4a9334cfcb3a | LIPID     | REPORTED | 2026-10-23 14:10:00+00 | 2026-10-24 02:10:00+00 |            4
+ 4a932e20-2aa2-46c3-ab11-9a3309bcd9c2 | LIPID     | REPORTED | 2026-09-29 12:10:00+00 | 2026-09-30 00:10:00+00 |            4
+ 9a4a65f1-3bb9-4254-a2b8-a9934ac8aa3c | LIPID     | REPORTED | 2026-09-29 12:10:00+00 | 2026-09-30 00:10:00+00 |            4
+ 012f5a42-9b97-4a46-9404-544e957e71be | COAG      | REPORTED | 2026-09-05 10:10:00+00 | 2026-09-05 16:10:00+00 |            2
+ 34f4be12-076b-40e0-a1c4-4ef89b178605 | LIPID     | REPORTED | 2026-08-11 15:10:00+00 | 2026-08-12 03:10:00+00 |            4
+ 5b2ddc62-18c1-49b6-a0e9-77be772e6d44 | COAG      | REPORTED | 2026-08-11 15:10:00+00 | 2026-08-11 21:10:00+00 |            2
+ 7b942660-5c6b-4096-8e2e-be6b30d5a701 | LIPID     | REPORTED | 2026-07-18 13:10:00+00 | 2026-07-19 01:10:00+00 |            4
+
+Time: 2.073 ms
+             lab_order_id             | test_code |  status  |      collected_at      |      reported_at       | result_count 
+--------------------------------------+-----------+----------+------------------------+------------------------+--------------
+ 599af456-0bb2-4001-9cbb-4a9334cfcb3a | LIPID     | REPORTED | 2026-10-23 14:10:00+00 | 2026-10-24 02:10:00+00 |            4
+ 4a932e20-2aa2-46c3-ab11-9a3309bcd9c2 | LIPID     | REPORTED | 2026-09-29 12:10:00+00 | 2026-09-30 00:10:00+00 |            4
+ 9a4a65f1-3bb9-4254-a2b8-a9934ac8aa3c | LIPID     | REPORTED | 2026-09-29 12:10:00+00 | 2026-09-30 00:10:00+00 |            4
+ 012f5a42-9b97-4a46-9404-544e957e71be | COAG      | REPORTED | 2026-09-05 10:10:00+00 | 2026-09-05 16:10:00+00 |            2
+ 34f4be12-076b-40e0-a1c4-4ef89b178605 | LIPID     | REPORTED | 2026-08-11 15:10:00+00 | 2026-08-12 03:10:00+00 |            4
+ 5b2ddc62-18c1-49b6-a0e9-77be772e6d44 | COAG      | REPORTED | 2026-08-11 15:10:00+00 | 2026-08-11 21:10:00+00 |            2
+ 7b942660-5c6b-4096-8e2e-be6b30d5a701 | LIPID     | REPORTED | 2026-07-18 13:10:00+00 | 2026-07-19 01:10:00+00 |            4
+
+Time: 2.071 ms
+
+=== PG-Q1 plan (one run) ===
+                                                                               QUERY PLAN                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=33.99..34.02 rows=9 width=48) (actual time=0.331..0.335 rows=7 loops=1)
+   Sort Key: lo.collected_at DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=58
+   ->  GroupAggregate  (cost=33.69..33.85 rows=9 width=48) (actual time=0.295..0.309 rows=7 loops=1)
+         Group Key: lo.lab_order_id
+         Buffers: shared hit=58
+         ->  Sort  (cost=33.69..33.71 rows=9 width=56) (actual time=0.284..0.289 rows=24 loops=1)
+               Sort Key: lo.lab_order_id
+               Sort Method: quicksort  Memory: 27kB
+               Buffers: shared hit=58
+               ->  Nested Loop Left Join  (cost=5.57..33.55 rows=9 width=56) (actual time=0.147..0.235 rows=24 loops=1)
+                     Buffers: shared hit=58
+                     ->  Nested Loop  (cost=5.15..29.85 rows=5 width=40) (actual time=0.121..0.156 rows=7 loops=1)
+                           Buffers: shared hit=29
+                           ->  Nested Loop  (cost=4.73..28.12 rows=3 width=16) (actual time=0.097..0.102 rows=5 loops=1)
+                                 Buffers: shared hit=7
+                                 ->  Index Scan using patient_mrn_key on patient p  (cost=0.29..8.30 rows=1 width=16) (actual time=0.065..0.066 rows=1 loops=1)
+                                       Index Cond: ((mrn)::text = 'MRN-0003927'::text)
+                                       Buffers: shared hit=3
+                                 ->  Bitmap Heap Scan on encounter e  (cost=4.45..19.77 rows=4 width=32) (actual time=0.024..0.026 rows=5 loops=1)
+                                       Recheck Cond: (p.patient_id = patient_id)
+                                       Heap Blocks: exact=1
+                                       Buffers: shared hit=4
+                                       ->  Bitmap Index Scan on ix_encounter_patient_started  (cost=0.00..4.45 rows=4 width=0) (actual time=0.017..0.017 rows=5 loops=1)
+                                             Index Cond: (patient_id = p.patient_id)
+                                             Buffers: shared hit=3
+                           ->  Index Scan using ix_lab_order_encounter on lab_order lo  (cost=0.42..0.56 rows=2 width=56) (actual time=0.008..0.009 rows=1 loops=5)
+                                 Index Cond: (encounter_id = e.encounter_id)
+                                 Buffers: shared hit=22
+                     ->  Index Scan using lab_result_one_per_analyte on lab_result lr  (cost=0.42..0.71 rows=3 width=32) (actual time=0.008..0.010 rows=3 loops=7)
+                           Index Cond: (lab_order_id = lo.lab_order_id)
+                           Buffers: shared hit=29
+ Planning:
+   Buffers: shared hit=50
+ Planning Time: 1.331 ms
+ Execution Time: 1.007 ms
+
+Time: 46.420 ms
+
+=== PG-Q3. Work queue: IN_PROGRESS, urgent first, oldest first, three runs ===
+             lab_order_id             | test_code | priority |   status    |      collected_at      
+--------------------------------------+-----------+----------+-------------+------------------------
+ ddff29a0-9a56-4f70-b97b-2f54f6c7c9e1 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ aa77332e-f97d-4d70-a620-5987849cd1ba | MP        | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 4bf110a7-599d-44b5-a1d2-e19c0aba9396 | LFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 355a7cee-ada2-4210-b96a-437b53a232bc | LFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 46df2449-bd16-493f-877f-fe6f8e9fe8ac | CRP       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 95e1c56a-e36a-4bcf-825c-4424cb269567 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 74217ea1-56b7-4bef-9572-37dedef852c0 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 65bd8125-07ca-42eb-8532-c52938d493fa | CRP       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 06b6bb06-c290-46d0-ac50-60e48183d850 | TFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 7210d5ed-32dc-46f9-a716-c47e514455d0 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+
+Time: 911.936 ms
+             lab_order_id             | test_code | priority |   status    |      collected_at      
+--------------------------------------+-----------+----------+-------------+------------------------
+ ddff29a0-9a56-4f70-b97b-2f54f6c7c9e1 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ aa77332e-f97d-4d70-a620-5987849cd1ba | MP        | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 4bf110a7-599d-44b5-a1d2-e19c0aba9396 | LFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 355a7cee-ada2-4210-b96a-437b53a232bc | LFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 46df2449-bd16-493f-877f-fe6f8e9fe8ac | CRP       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 95e1c56a-e36a-4bcf-825c-4424cb269567 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 74217ea1-56b7-4bef-9572-37dedef852c0 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 65bd8125-07ca-42eb-8532-c52938d493fa | CRP       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 06b6bb06-c290-46d0-ac50-60e48183d850 | TFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 7210d5ed-32dc-46f9-a716-c47e514455d0 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+
+Time: 26.269 ms
+             lab_order_id             | test_code | priority |   status    |      collected_at      
+--------------------------------------+-----------+----------+-------------+------------------------
+ ddff29a0-9a56-4f70-b97b-2f54f6c7c9e1 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ aa77332e-f97d-4d70-a620-5987849cd1ba | MP        | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 4bf110a7-599d-44b5-a1d2-e19c0aba9396 | LFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 355a7cee-ada2-4210-b96a-437b53a232bc | LFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 46df2449-bd16-493f-877f-fe6f8e9fe8ac | CRP       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 95e1c56a-e36a-4bcf-825c-4424cb269567 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:10:00+00
+ 74217ea1-56b7-4bef-9572-37dedef852c0 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 65bd8125-07ca-42eb-8532-c52938d493fa | CRP       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 06b6bb06-c290-46d0-ac50-60e48183d850 | TFT       | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+ 7210d5ed-32dc-46f9-a716-c47e514455d0 | LIPID     | ROUTINE  | IN_PROGRESS | 2026-07-18 10:40:00+00
+
+Time: 35.060 ms
+
+=== PG-Q3 plan (one run) ===
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=2711.76..2711.79 rows=10 width=36) (actual time=32.498..32.507 rows=10 loops=1)
+   Buffers: shared hit=1336
+   ->  Sort  (cost=2711.76..2735.16 rows=9357 width=36) (actual time=32.496..32.499 rows=10 loops=1)
+         Sort Key: priority DESC, collected_at
+         Sort Method: top-N heapsort  Memory: 26kB
+         Buffers: shared hit=1336
+         ->  Seq Scan on lab_order lo  (cost=0.00..2509.56 rows=9357 width=36) (actual time=0.017..26.602 rows=9500 loops=1)
+               Filter: (status = 'IN_PROGRESS'::lab_status)
+               Rows Removed by Filter: 84385
+               Buffers: shared hit=1336
+ Planning Time: 0.138 ms
+ Execution Time: 32.536 ms
+
+Time: 33.479 ms
+
+=== PG-Q4. Total cholesterol trend for MRN-0003927, three runs ===
+      collected_at      | value_numeric |  flag  
+------------------------+---------------+--------
+ 2026-07-18 13:10:00+00 |         0.000 | NORMAL
+ 2026-08-11 15:10:00+00 |         4.100 | NORMAL
+ 2026-09-29 12:10:00+00 |         0.000 | NORMAL
+ 2026-09-29 12:10:00+00 |         6.250 | HIGH
+ 2026-10-23 14:10:00+00 |         0.000 | NORMAL
+
+Time: 29.862 ms
+      collected_at      | value_numeric |  flag  
+------------------------+---------------+--------
+ 2026-07-18 13:10:00+00 |         0.000 | NORMAL
+ 2026-08-11 15:10:00+00 |         4.100 | NORMAL
+ 2026-09-29 12:10:00+00 |         0.000 | NORMAL
+ 2026-09-29 12:10:00+00 |         6.250 | HIGH
+ 2026-10-23 14:10:00+00 |         0.000 | NORMAL
+
+Time: 2.913 ms
+      collected_at      | value_numeric |  flag  
+------------------------+---------------+--------
+ 2026-07-18 13:10:00+00 |         0.000 | NORMAL
+ 2026-08-11 15:10:00+00 |         4.100 | NORMAL
+ 2026-09-29 12:10:00+00 |         0.000 | NORMAL
+ 2026-09-29 12:10:00+00 |         6.250 | HIGH
+ 2026-10-23 14:10:00+00 |         0.000 | NORMAL
+
+Time: 2.778 ms
+
+=== PG-Q4 plan (one run) ===
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=34.98..34.99 rows=1 width=18) (actual time=0.365..0.370 rows=5 loops=1)
+   Sort Key: lo.collected_at
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=59
+   ->  Nested Loop  (cost=5.57..34.97 rows=1 width=18) (actual time=0.202..0.345 rows=5 loops=1)
+         Join Filter: (lr.analyte_id = a.analyte_id)
+         Rows Removed by Join Filter: 19
+         Buffers: shared hit=59
+         ->  Seq Scan on analyte a  (cost=0.00..1.31 rows=1 width=2) (actual time=0.055..0.061 rows=1 loops=1)
+               Filter: ((analyte_name)::text = 'Total cholesterol'::text)
+               Rows Removed by Filter: 24
+               Buffers: shared hit=1
+         ->  Nested Loop  (cost=5.57..33.55 rows=9 width=20) (actual time=0.143..0.275 rows=24 loops=1)
+               Buffers: shared hit=58
+               ->  Nested Loop  (cost=5.15..29.85 rows=5 width=24) (actual time=0.123..0.162 rows=7 loops=1)
+                     Buffers: shared hit=29
+                     ->  Nested Loop  (cost=4.73..28.12 rows=3 width=16) (actual time=0.103..0.109 rows=5 loops=1)
+                           Buffers: shared hit=7
+                           ->  Index Scan using patient_mrn_key on patient p  (cost=0.29..8.30 rows=1 width=16) (actual time=0.029..0.030 rows=1 loops=1)
+                                 Index Cond: ((mrn)::text = 'MRN-0003927'::text)
+                                 Buffers: shared hit=3
+                           ->  Bitmap Heap Scan on encounter e  (cost=4.45..19.77 rows=4 width=32) (actual time=0.067..0.070 rows=5 loops=1)
+                                 Recheck Cond: (p.patient_id = patient_id)
+                                 Heap Blocks: exact=1
+                                 Buffers: shared hit=4
+                                 ->  Bitmap Index Scan on ix_encounter_patient_started  (cost=0.00..4.45 rows=4 width=0) (actual time=0.051..0.051 rows=5 loops=1)
+                                       Index Cond: (patient_id = p.patient_id)
+                                       Buffers: shared hit=3
+                     ->  Index Scan using ix_lab_order_encounter on lab_order lo  (cost=0.42..0.56 rows=2 width=40) (actual time=0.008..0.009 rows=1 loops=5)
+                           Index Cond: (encounter_id = e.encounter_id)
+                           Buffers: shared hit=22
+               ->  Index Scan using lab_result_one_per_analyte on lab_result lr  (cost=0.42..0.71 rows=3 width=28) (actual time=0.008..0.009 rows=3 loops=7)
+                     Index Cond: (lab_order_id = lo.lab_order_id)
+                     Buffers: shared hit=29
+ Planning:
+   Buffers: shared hit=51
+ Planning Time: 1.663 ms
+ Execution Time: 0.567 ms
+
+Time: 3.309 ms
+
+=== PG-Q5. Orders by test type since 2026-07-29, three runs ===
+ test_code | orders 
+-----------+--------
+ COAG      |   7704
+ MP        |   7631
+ CRP       |   7540
+ LIPID     |   7534
+ LFT       |   7529
+ URIN      |   7509
+ TFT       |   7507
+ UEC       |   7447
+ HBA1C     |   7374
+ FBC       |   7286
+
+Time: 98.622 ms
+ test_code | orders 
+-----------+--------
+ COAG      |   7704
+ MP        |   7631
+ CRP       |   7540
+ LIPID     |   7534
+ LFT       |   7529
+ URIN      |   7509
+ TFT       |   7507
+ UEC       |   7447
+ HBA1C     |   7374
+ FBC       |   7286
+
+Time: 96.586 ms
+ test_code | orders 
+-----------+--------
+ COAG      |   7704
+ MP        |   7631
+ CRP       |   7540
+ LIPID     |   7534
+ LFT       |   7529
+ URIN      |   7509
+ TFT       |   7507
+ UEC       |   7447
+ HBA1C     |   7374
+ FBC       |   7286
+
+Time: 95.551 ms
+
+=== PG insert. One lab_order plus four result rows, rolled back ===
+BEGIN
+Time: 2.845 ms
+INSERT 0 1
+Time: 98.477 ms
+INSERT 0 4
+Time: 24.412 ms
+ROLLBACK
+Time: 2.109 ms
+Timing is off.
+
+exit: 0 (elapsed 7.0s)

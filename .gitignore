@@ -25,6 +25,7 @@ desktop.ini
 *.backup
 pgdata/
 mongodata/
+portfolio-4-nosql/data/
 
 # Transient outputs (keep logs and screenshots, they are evidence)
 *.tmp

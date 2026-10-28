@@ -1,0 +1,17 @@
+﻿=== Environment and source counts ===
+captured: 2026-10-28 19:11:46 +01:00
+host: RASHEED-PC
+
+client 29.5.3 server 29.5.3
+portfolio-mongodb mongo:7 Up 16 minutes
+portfolio-postgres postgres:16 Up 16 minutes (healthy)
+db version v7.0.14
+Build Info: {
+PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+encounters|62588
+lab_orders|93885
+lab_results|163387
+patients|20000
+patients_with_lab_orders|15200
+
+exit: 0 (elapsed 5.6s)

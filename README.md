@@ -68,7 +68,7 @@ Relevant because the repository is public.
 | 1 | Database Design and Modelling | 7 | [`portfolio-1-database-design/`](portfolio-1-database-design/) | complete |
 | 2 | Query Processing and Optimisation | 7 | [`portfolio-2-query-optimisation/`](portfolio-2-query-optimisation/) | complete |
 | 3 | Transactions and Concurrency | 7 | [`portfolio-3-transactions-concurrency/`](portfolio-3-transactions-concurrency/) | complete |
-| 4 | NoSQL and Advanced Data Models | 7 | [`portfolio-4-nosql/`](portfolio-4-nosql/) | _pending_ |
+| 4 | NoSQL and Advanced Data Models | 7 | [`portfolio-4-nosql/`](portfolio-4-nosql/) | complete |
 | 5 | Distributed and Cloud Database | 6 | [`portfolio-5-distributed-cloud/`](portfolio-5-distributed-cloud/) | _pending_ |
 | — | Final Documentation and Reflection | 6 | [`final-documentation/`](final-documentation/) | _pending_ |
 
@@ -91,6 +91,8 @@ advanced-database-portfolio/
 │   ├── capture-plans.ps1      <- P2 execution-plan capture
 │   ├── summarise-plans.ps1    <- P2 plan summary and medians
 │   ├── capture-p3.ps1         <- P3 two-session evidence capture and cleanup
+│   ├── load-p4.ps1            <- P4 PostgreSQL export -> MongoDB load/transform
+│   ├── capture-p4.ps1         <- P4 evidence capture and document export
 │   └── puppeteer.json         <- renderer config (uses system Chrome, no Chromium download)
 ├── portfolio-1-database-design/
 │   ├── schema.sql                     <- DDL: 21 relations, keys, constraints, triggers
@@ -112,9 +114,21 @@ advanced-database-portfolio/
 │   ├── README.md              <- overview, results and mechanism comparison
 │   └── isolation-tests.md     <- detailed test record with actual output
 ├── portfolio-4-nosql/
-│   ├── mongodb-setup.js       <- collection, validator, indexes, queries
-│   ├── model-design.md        <- suitability argument
-│   └── sample-documents.json
+│   ├── mongodb-setup.js       <- collection, validator, indexes
+│   ├── export-lab-results.sql <- PostgreSQL -> NDJSON, one line per order
+│   ├── export-patient-refs.sql
+│   ├── load-ndjson.js         <- staging loader (mongoimport fallback)
+│   ├── transform-lab-results.js <- dates -> BSON, $merge, staging cleanup
+│   ├── queries.js             <- Q1-Q6 + explain("executionStats")
+│   ├── validation-tests.js    <- 11 accept/reject cases
+│   ├── consistency-checks.js  <- 27 cross-document checks
+│   ├── benchmark.js           <- warm-run medians
+│   ├── compare-postgres.sql   <- P1/P2 equivalents with \timing
+│   ├── export-samples.js
+│   ├── model-design.md        <- full suitability argument
+│   ├── README.md              <- overview, results and limitations
+│   ├── sample-documents.json  <- real Extended JSON documents
+│   └── evidence/              <- raw load, validator, query and size captures
 ├── portfolio-5-distributed-cloud/
 │   ├── architecture.md        <- replication / sharding / consistency reasoning
 │   ├── replication-setup.sh   <- deployment evidence
@@ -180,6 +194,18 @@ congested link. Also confirm there is room on disk — both images need about 2 
 unpacked.
 
 Connect with `psql -h localhost -U portfolio -d hospital` or `mongosh`.
+
+MongoDB is created and validated on first boot, but it is **not seeded with the 93,885
+laboratory reports** by the init script. Load Portfolio 4 from the same PostgreSQL source
+after the relational database is ready:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/load-p4.ps1
+```
+
+The loader exports PostgreSQL to NDJSON, stages it, converts the dates and `$merge`s the
+documents into the validated collection. `scripts/capture-p4.ps1` regenerates the P4
+evidence and `sample-documents.json`.
 
 ### Confirming It Finished
 
@@ -315,3 +341,4 @@ Work is committed progressively rather than in a single final upload.
 | 26 Oct 2026 | P1 | Exported the ER diagram to PNG and added the reproducible export script; corrected the determinism note. |
 | 26 Oct 2026 | P2 | Six business queries, seven accepted indexes with one rejected, baseline and 21-run final plans, loaded-host variance control, optimisation analysis. |
 | 27 Oct 2026 | P3 | `COMMIT`, `ROLLBACK` and `SAVEPOINT` tests; five two-session scenarios covering double-booking, exclusion, pessimistic locking, isolation levels and write skew; raw evidence capture and analysis. |
+| 28 Oct 2026 | P4 | Document model for 93,885 laboratory reports with 163,387 embedded results; `$jsonSchema` validator, six query-driven indexes, 11 validator tests, 27 consistency checks; PostgreSQL→MongoDB ETL with index rebuild; Q1–Q6 plans, `$facet`/`$lookup`, warm-run benchmark, relational comparison and raw evidence capture. |

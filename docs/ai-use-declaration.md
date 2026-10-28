@@ -12,7 +12,7 @@ This file is maintained as work progresses. It is not reconstructed at submissio
 
 | Tool | Version / model | Period of use |
 |---|---|---|
-| OpenCode (AI coding agent) | DeepSeek V4.1 Flash Free | 25-27 October 2026 |
+| OpenCode (AI coding agent) | DeepSeek V4.1 Flash Free | 25-28 October 2026 |
 
 ---
 
@@ -180,6 +180,75 @@ availability check, which the anomaly test shows is insufficient; and `SELECT ..
 UPDATE` as the adopted booking control, because it serialises every booking for the
 doctor. The exclusion constraint is adopted for appointments; `SERIALIZABLE` is retained
 for the multi-row on-call invariant, where an exclusion key does not exist.
+
+---
+
+### Entry 5 — 28 October 2026 — NoSQL and advanced data models
+
+**Tool:** OpenCode, model DeepSeek V4.1 Flash Free.
+
+**Task:** design and implement the Portfolio 4 document model for the same Riverbend
+laboratory data, build the PostgreSQL→MongoDB ETL, prove the validator and indexes with
+real inserts and query plans, benchmark the document store against the relational
+implementation, and produce traceable evidence.
+
+**Prompt (summarised):** "Model a subset of the existing case study as a document store,
+not a toy dataset. Justify what stays relational and why. Implement a `$jsonSchema`
+validator, query-driven indexes, valid and invalid inserts, `$lookup`/`$facet`, a
+read-pattern demonstration and an honest PostgreSQL comparison. Capture raw terminal
+output and state where the document model is the wrong choice."
+
+**Output used:** `portfolio-4-nosql/mongodb-setup.js`, `export-lab-results.sql`,
+`export-patient-refs.sql`, `load-ndjson.js`, `transform-lab-results.js`, `queries.js`,
+`validation-tests.js`, `consistency-checks.js`, `benchmark.js`, `compare-postgres.sql`,
+`export-samples.js`, `model-design.md`, `README.md`, `sample-documents.json` and
+`evidence/00`–`07`; plus `scripts/load-p4.ps1`, `scripts/capture-p4.ps1`,
+`scripts/verify.ps1` and `scripts/verify.sh`.
+
+**Verification performed:** the final evidence is the output of one complete
+`scripts/capture-p4.ps1` run (exit 0) against the live containers, after a full reload.
+Every figure quoted in the P4 README and model design was checked against those files with
+`Select-String`/`Get-Content` before it was written. The captured run shows 93,885
+documents, 163,387 embedded results, 15,200 patient references, 11/11 validator cases with
+the server's error codes, 27/27 consistency checks, six `explain("executionStats")`
+summaries, the PostgreSQL `\timing` output and five timed MongoDB runs per query. The
+PostgreSQL and MongoDB insert equivalents were executed and rolled back or deleted
+afterwards; the collection was then recounted to confirm no test rows remained. The final
+`scripts/verify.ps1 -Mongosh <host path>` run passed every container, schema, seed-data,
+MongoDB count/index and P4-artefact check. `scripts/verify.sh` was brought to the same
+coverage and syntax-checked with `bash -n` inside the PostgreSQL container, because this
+Windows host has no usable Bash shell.
+
+**Corrections made:** the first `queries.js` assumed `find()`'s top-level
+`executionStats`, but `db.collection.explain("executionStats").aggregate()` nests it under
+`stages[0].$cursor`; the summary function was rewritten to handle both shapes and to print
+the pipeline stages. `validation-tests.js` relied on `e.codeName`, which mongosh 2.2.12 did
+not populate for these inserts; an explicit `121 → DocumentValidationFailure` /
+`11000 → DuplicateKey` map now prints the server's documented names. `capture-p4.ps1`
+originally passed JavaScript to `mongosh --eval` from PowerShell, which stripped the
+inner quotes and produced invalid JS; evaluations now go through a temporary `.js` file.
+The PostgreSQL write comparison initially spread `\gset` across separate `psql -c` calls,
+which cannot share psql variables; it was rewritten as one SQL file inside a transaction.
+The sample export filtered for `ORDERED` + `URGENT`, but the seed contains no urgent
+orders that have not already been reported; it now selects a real pending `ORDERED` order
+with zero results. The PostgreSQL order-insert sample was also corrected to insert a
+`REPORTED` order with collected/reported timestamps, because an `ORDERED` row with
+`collected_at` set violates the schema's check constraint.
+
+The first full evidence capture failed with `MongoNetworkError: connection ... closed`.
+The cause was host disk exhaustion (under 1 GB free), which took Docker Desktop/WSL down,
+not a database or script fault. Stale temporary files, including five 1.65 GB duplicate
+video directories and old MongoDB image-build/extraction directories, were removed
+(~8.5 GB freed), Docker Desktop was restarted, and the load and capture were re-run from
+scratch. The report quotes only that final clean run, not the earlier partial one.
+
+**Rejected / not used:** claiming MongoDB was faster in general — the warm PostgreSQL
+timings match or beat it on most reads, and the report says so; using `ObjectId` for
+cross-store IDs — UUID strings preserve the PostgreSQL identity and make `$merge`
+idempotent; duplicating the patient master in MongoDB — `patient_refs` is a derived
+identifier projection only; hiding validator gaps behind application code — the gaps and
+the reconciliation checks are named in `model-design.md`; and cropped screenshots — the
+evidence is raw command output with exit codes, so it can be re-run and diffed.
 
 ---
 

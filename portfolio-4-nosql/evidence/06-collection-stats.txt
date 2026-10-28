@@ -1,0 +1,79 @@
+﻿=== Collection and index sizes ===
+captured: 2026-10-28 19:18:37 +01:00
+host: RASHEED-PC
+
+{
+  documents: 93885,
+  averageDocumentBytes: 925,
+  collectionBytes: 86845355,
+  storageBytes: 40128512,
+  totalIndexBytes: 17506304,
+  indexSizes: {
+    _id_: 1314816,
+    ux_order_id: 5500928,
+    ix_patient_collected: 1789952,
+    ix_status_priority_collected: 1069056,
+    ix_result_flag_collected: 1409024,
+    ix_patient_analyte_collected: 5398528,
+    ix_collected: 1024000
+  },
+  indexes: [
+    {
+      name: '_id_',
+      key: {
+        _id: 1
+      }
+    },
+    {
+      name: 'ux_order_id',
+      key: {
+        order_id: 1
+      }
+    },
+    {
+      name: 'ix_patient_collected',
+      key: {
+        patient_id: 1,
+        collected_at: -1
+      }
+    },
+    {
+      name: 'ix_status_priority_collected',
+      key: {
+        status: 1,
+        priority: -1,
+        collected_at: 1
+      }
+    },
+    {
+      name: 'ix_result_flag_collected',
+      key: {
+        'results.flag': 1,
+        collected_at: -1
+      }
+    },
+    {
+      name: 'ix_patient_analyte_collected',
+      key: {
+        patient_id: 1,
+        'results.analyte': 1,
+        collected_at: -1
+      }
+    },
+    {
+      name: 'ix_collected',
+      key: {
+        collected_at: -1
+      }
+    }
+  ]
+}
+{
+  patient_refs: 15200,
+  patient_refs_indexes: [
+    '_id_',
+    'ux_patient_mrn'
+  ]
+}
+
+exit: 0 (elapsed 3.6s)

@@ -1,33 +1,168 @@
-{
-  "_comment": "Replace with real documents exported from the running database. These are illustrative shapes only.",
-  "collection": "lab_results",
-  "database": "hospital_labs",
-  "documents": [
-    {
-      "order_id": "LAB-000001",
-      "patient_id": "PAT-00042",
-      "test_code": "LIPID",
-      "collected_at": "2026-03-14T08:15:00Z",
-      "reported_at": "2026-03-14T15:40:00Z",
-      "status": "REPORTED",
-      "results": [
-        { "analyte": "Total cholesterol", "value": 5.8, "unit": "mmol/L", "ref_low": 0, "ref_high": 5.0, "flag": "HIGH" },
-        { "analyte": "HDL", "value": 1.1, "unit": "mmol/L", "ref_low": 1.0, "ref_high": 2.0, "flag": "NORMAL" },
-        { "analyte": "LDL", "value": 3.9, "unit": "mmol/L", "ref_low": 0, "ref_high": 3.0, "flag": "HIGH" }
-      ]
+﻿[
+  {
+    "order_id": "352ec38b-aebb-46f2-8534-33e904f72689",
+    "encounter_id": "07846650-b4b7-4b8d-ba52-0b8d2318d57a",
+    "patient_id": "4cd15ff3-dffc-438c-bf8e-514f6f6d6b91",
+    "patient_mrn": "MRN-0000430",
+    "test_code": "LIPID",
+    "test_name": "Lipid Profile",
+    "specimen_type": "Blood",
+    "department": "Pathology and Laboratory",
+    "priority": "URGENT",
+    "status": "REPORTED",
+    "ordered_at": {
+      "$date": "2026-07-18T09:10:00Z"
     },
-    {
-      "order_id": "LAB-000002",
-      "patient_id": "PAT-00042",
-      "test_code": "FBC",
-      "collected_at": "2026-03-14T08:20:00Z",
-      "reported_at": null,
-      "status": "IN_PROGRESS",
-      "results": [
-        { "analyte": "Haemoglobin", "value": 134, "unit": "g/L", "ref_low": 130, "ref_high": 175, "flag": "NORMAL" },
-        { "analyte": "WBC", "value": 11.2, "unit": "10^9/L", "ref_low": 4.0, "ref_high": 11.0, "flag": "HIGH" },
-        { "analyte": "Platelets", "value": 250, "unit": "10^9/L", "ref_low": 150, "ref_high": 400, "flag": "NORMAL" }
-      ]
-    }
-  ]
-}
+    "collected_at": {
+      "$date": "2026-07-18T10:10:00Z"
+    },
+    "reported_at": {
+      "$date": "2026-07-18T22:10:00Z"
+    },
+    "ordered_by": "3c2a986f-9221-43ce-9421-8dbea59a13a5",
+    "results": [
+      {
+        "analyte_id": 5,
+        "analyte": "Total cholesterol",
+        "value": 0,
+        "value_type": "numeric",
+        "unit": "mmol/L",
+        "ref_low": 0,
+        "ref_high": 5,
+        "flag": "NORMAL",
+        "resulted_at": {
+          "$date": "2026-07-18T22:10:00Z"
+        },
+        "resulted_by": "ffff91fd-02b8-46f3-9743-19b20e01f3f7"
+      },
+      {
+        "analyte_id": 6,
+        "analyte": "HDL cholesterol",
+        "value": 1.22,
+        "value_type": "numeric",
+        "unit": "mmol/L",
+        "ref_low": 1,
+        "ref_high": 2,
+        "flag": "NORMAL",
+        "resulted_at": {
+          "$date": "2026-07-18T22:10:00Z"
+        },
+        "resulted_by": "ffff91fd-02b8-46f3-9743-19b20e01f3f7"
+      },
+      {
+        "analyte_id": 7,
+        "analyte": "LDL cholesterol",
+        "value": 0,
+        "value_type": "numeric",
+        "unit": "mmol/L",
+        "ref_low": 0,
+        "ref_high": 3,
+        "flag": "NORMAL",
+        "resulted_at": {
+          "$date": "2026-07-18T22:10:00Z"
+        },
+        "resulted_by": "ffff91fd-02b8-46f3-9743-19b20e01f3f7"
+      },
+      {
+        "analyte_id": 8,
+        "analyte": "Triglycerides",
+        "value": 0,
+        "value_type": "numeric",
+        "unit": "mmol/L",
+        "ref_low": 0,
+        "ref_high": 1.7,
+        "flag": "NORMAL",
+        "resulted_at": {
+          "$date": "2026-07-18T22:10:00Z"
+        },
+        "resulted_by": "ffff91fd-02b8-46f3-9743-19b20e01f3f7"
+      }
+    ],
+    "result_count": 4,
+    "schema_version": 1
+  },
+  {
+    "order_id": "fc188912-d421-4028-94fd-04acfd67da30",
+    "encounter_id": "ba7d155b-3d12-435d-b9c0-1c2c147d0cdd",
+    "patient_id": "88dec4e7-4f11-40d8-a583-4bf27e72bc34",
+    "patient_mrn": "MRN-0003719",
+    "test_code": "MP",
+    "test_name": "Malaria Parasite Screen",
+    "specimen_type": "Blood",
+    "department": "Pathology and Laboratory",
+    "priority": "URGENT",
+    "status": "REPORTED",
+    "ordered_at": {
+      "$date": "2026-07-18T11:40:00Z"
+    },
+    "collected_at": {
+      "$date": "2026-07-18T12:40:00Z"
+    },
+    "reported_at": {
+      "$date": "2026-07-18T14:40:00Z"
+    },
+    "ordered_by": "a84e3c11-3c69-4247-8ebe-dda6d0d22d92",
+    "results": [
+      {
+        "analyte_id": 21,
+        "analyte": "Malaria parasites",
+        "value": "P. falciparum detected",
+        "value_type": "text",
+        "unit": "qualitative",
+        "ref_low": null,
+        "ref_high": null,
+        "flag": "NORMAL",
+        "resulted_at": {
+          "$date": "2026-07-18T14:40:00Z"
+        },
+        "resulted_by": "f478c41b-65b8-470b-9094-378b6a26d814"
+      }
+    ],
+    "result_count": 1,
+    "schema_version": 1
+  },
+  {
+    "order_id": "355a7cee-ada2-4210-b96a-437b53a232bc",
+    "encounter_id": "4a25bc25-ae1b-4ee4-930e-39ac79af47d4",
+    "patient_id": "7d9c0018-853d-4171-b529-33d90bbb6afa",
+    "patient_mrn": "MRN-0000183",
+    "test_code": "LFT",
+    "test_name": "Liver Function Tests",
+    "specimen_type": "Blood",
+    "department": "Pathology and Laboratory",
+    "priority": "ROUTINE",
+    "status": "IN_PROGRESS",
+    "ordered_at": {
+      "$date": "2026-07-18T09:10:00Z"
+    },
+    "collected_at": {
+      "$date": "2026-07-18T10:10:00Z"
+    },
+    "reported_at": null,
+    "ordered_by": "f71d32ba-d4da-4b4d-9451-0ba63e13105b",
+    "results": [],
+    "result_count": 0,
+    "schema_version": 1
+  },
+  {
+    "order_id": "000c1b67-7ae7-44c0-81c2-cb5e6338fe43",
+    "encounter_id": "4e9def67-7abd-48b1-87b8-0d916ad44ebf",
+    "patient_id": "2fc5a577-80f2-4c74-b825-872d11a78bdb",
+    "patient_mrn": "MRN-0009165",
+    "test_code": "UEC",
+    "test_name": "Urea and Electrolytes",
+    "specimen_type": "Blood",
+    "department": "Pathology and Laboratory",
+    "priority": "ROUTINE",
+    "status": "ORDERED",
+    "ordered_at": {
+      "$date": "2026-08-17T15:10:00Z"
+    },
+    "collected_at": null,
+    "reported_at": null,
+    "ordered_by": "3a2d2101-607d-4e92-907e-12043afa28ee",
+    "results": [],
+    "result_count": 0,
+    "schema_version": 1
+  }
+]

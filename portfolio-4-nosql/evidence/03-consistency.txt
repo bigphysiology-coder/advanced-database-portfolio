@@ -1,0 +1,36 @@
+﻿=== Cross-document consistency checks ===
+captured: 2026-10-28 19:17:15 +01:00
+host: RASHEED-PC
+
+=== Cross-document consistency: lab_results ===
+PASS  documents: 93885 (expected 93885)
+PASS  status ORDERED: 9494 (expected 9494)
+PASS  status COLLECTED: 9360 (expected 9360)
+PASS  status IN_PROGRESS: 9500 (expected 9500)
+PASS  status REPORTED: 65531 (expected 65531)
+PASS  embedded result rows: 163387 (expected 163387)
+PASS  result_count != size(results): 0 (expected 0)
+PASS  patient_id with no patient_refs match: 0 (expected 0)
+PASS  patient_mrn disagreeing with patient_refs: 0 (expected 0)
+PASS  duplicate patient IDs in patient_refs: 0 (expected 0)
+PASS  result analyte not belonging to its test: 0 (expected 0)
+PASS  collected_at before ordered_at: 0 (expected 0)
+PASS  reported_at before collected_at: 0 (expected 0)
+PASS  ORDERED with collection or results: 0 (expected 0)
+PASS  COLLECTED/IN_PROGRESS with missing collection, report or results: 0 (expected 0)
+PASS  REPORTED with missing timestamps or results: 0 (expected 0)
+PASS  numeric flag disagrees with reference range: 0 (expected 0)
+PASS  flag NORMAL: 121513 (expected 121513)
+PASS  flag LOW: 26145 (expected 26145)
+PASS  flag HIGH: 15729 (expected 15729)
+PASS  index _id_: present (expected present)
+PASS  index ix_collected: present (expected present)
+PASS  index ix_patient_analyte_collected: present (expected present)
+PASS  index ix_patient_collected: present (expected present)
+PASS  index ix_result_flag_collected: present (expected present)
+PASS  index ix_status_priority_collected: present (expected present)
+PASS  index ux_order_id: present (expected present)
+
+consistency checks: all passed
+
+exit: 0 (elapsed 46.7s)

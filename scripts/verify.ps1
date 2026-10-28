@@ -8,9 +8,12 @@
 #   3. the schema init ran (required tables and the exclusion constraint exist)
 #   4. seed data reached the expected row counts
 #   5. MongoDB accepts an authenticated connection
+#   6. the P4 collection is present with the expected counts and indexes
+#   7. the committed P4 evidence files are present
 #
 # Usage:
 #   pwsh scripts/verify.ps1
+#   pwsh scripts/verify.ps1 -Mongosh "C:\path\to\mongosh.exe"
 #
 # Exit code 0 = every check passed. 1 = something is wrong; the output says what.
 #
@@ -18,6 +21,10 @@
 # "at least this" for transactional data, so this script still passes after you
 # start adding rows in Portfolio 2 and 3.
 # ============================================================================
+
+param(
+    [string]$Mongosh = 'mongosh'
+)
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -205,17 +212,115 @@ Section "MongoDB"
 if (-not $script:mongoRunning) {
     Warn "skipped - container not running (required from Portfolio 4)"
 } else {
-    try {
-        $ok = docker compose exec -T mongodb mongosh --quiet `
-                --username portfolio --password portfolio `
-                --authenticationDatabase admin `
-                --eval "db.adminCommand({ ping: 1 }).ok" 2>&1
-        if (("$ok".Trim()) -eq '1') { Pass "responding to authenticated ping" }
-        else { Fail "unexpected response: $ok" }
-    } catch {
-        Fail "could not reach MongoDB: $_"
+    # The official mongo image ships mongosh; a locally built fallback image
+    # may not. Use the container shell when available, otherwise a host shell
+    # supplied with -Mongosh.
+    & docker exec portfolio-mongodb sh -c 'command -v mongosh >/dev/null 2>&1' 2>$null
+    $script:mongoshInContainer = ($LASTEXITCODE -eq 0)
+    $hostShell = Get-Command $Mongosh -ErrorAction SilentlyContinue
+    $mongoUri = 'mongodb://portfolio:portfolio@localhost:27017/hospital_labs?authSource=admin'
+
+    if (-not $script:mongoshInContainer -and $null -eq $hostShell) {
+        Warn "mongosh not found in the container or on PATH; P4 collection checks skipped"
+    } else {
+        function Invoke-VerifyMongo([string]$Expression) {
+            $tempFile = Join-Path ([System.IO.Path]::GetTempPath()) ("verify-mongo-" + [guid]::NewGuid().ToString('N') + ".js")
+            Set-Content -Path $tempFile -Value $Expression -Encoding utf8
+            try {
+                if ($script:mongoshInContainer) {
+                    docker cp $tempFile portfolio-mongodb:/tmp/verify-p4.js | Out-Null
+                    $output = docker exec -T portfolio-mongodb mongosh --quiet `
+                        --username portfolio --password portfolio `
+                        --authenticationDatabase admin hospital_labs `
+                        --file /tmp/verify-p4.js 2>&1
+                    docker exec portfolio-mongodb rm -f /tmp/verify-p4.js *> $null
+                }
+                else {
+                    $output = & $Mongosh --quiet $mongoUri --file $tempFile 2>&1
+                }
+                $code = $LASTEXITCODE
+            }
+            finally {
+                Remove-Item $tempFile -ErrorAction SilentlyContinue
+            }
+            if ($code -ne 0) { throw (($output | ForEach-Object { "$_" }) -join "`n") }
+            return @($output | ForEach-Object { "$_" })
+        }
+
+        try {
+            $ping = (Invoke-VerifyMongo 'print(db.adminCommand({ ping: 1 }).ok)' | Select-Object -Last 1).Trim()
+            if ($ping -eq '1') { Pass "responding to authenticated ping" }
+            else { Fail "unexpected ping response: $ping" }
+
+            $stats = Invoke-VerifyMongo @'
+const hasLab = db.getCollectionNames().indexOf("lab_results") >= 0;
+const hasRefs = db.getCollectionNames().indexOf("patient_refs") >= 0;
+const docs = hasLab ? db.lab_results.countDocuments({}) : 0;
+const results = hasLab
+    ? (db.lab_results.aggregate([{ $group: { _id: null, n: { $sum: "$result_count" } } }]).toArray()[0] || { n: 0 }).n
+    : 0;
+const refs = hasRefs ? db.patient_refs.countDocuments({}) : 0;
+const indexes = hasLab ? db.lab_results.getIndexes().map(i => i.name).sort().join(",") : "";
+print("exists=" + (hasLab ? 1 : 0));
+print("documents=" + docs);
+print("results=" + results);
+print("refs=" + refs);
+print("indexes=" + indexes);
+'@
+
+            $line = @{}
+            foreach ($item in $stats) {
+                if ($item -match '^([a-z]+)=(.*)$') { $line[$matches[1]] = $matches[2] }
+            }
+
+            if ($line['exists'] -ne '1' -or [int]$line['documents'] -eq 0) {
+                Warn "P4 collection not loaded; run: powershell -File scripts/load-p4.ps1"
+            }
+            else {
+                if ([int]$line['documents'] -eq 93885) { Pass "lab_results documents = 93885" }
+                else { Fail "lab_results documents = $($line['documents']), expected 93885 (reload P4)" }
+
+                if ([int]$line['results'] -eq 163387) { Pass "embedded result rows = 163387" }
+                else { Fail "embedded result rows = $($line['results']), expected 163387" }
+
+                if ([int]$line['refs'] -eq 15200) { Pass "patient_refs documents = 15200" }
+                else { Fail "patient_refs documents = $($line['refs']), expected 15200" }
+
+                $expectedIndexes = @('ux_order_id', 'ix_patient_collected',
+                    'ix_status_priority_collected', 'ix_result_flag_collected',
+                    'ix_patient_analyte_collected', 'ix_collected')
+                $actualIndexes = @($line['indexes'] -split ',' | Where-Object { $_ })
+                $missing = @($expectedIndexes | Where-Object { $actualIndexes -notcontains $_ })
+                if ($missing.Count -eq 0) { Pass "all six P4 indexes present" }
+                else { Fail "missing P4 indexes: $($missing -join ', ')" }
+            }
+        } catch {
+            Fail "MongoDB check failed: $_"
+        }
     }
 }
+
+# ----------------------------------------------------------------------------
+# 5b. Portfolio 4 artefacts
+# ----------------------------------------------------------------------------
+Section "Portfolio 4 artefacts"
+
+$p4Files = @(
+    'portfolio-4-nosql/model-design.md',
+    'portfolio-4-nosql/README.md',
+    'portfolio-4-nosql/sample-documents.json',
+    'portfolio-4-nosql/evidence/00-environment.txt',
+    'portfolio-4-nosql/evidence/01-load.txt',
+    'portfolio-4-nosql/evidence/02-validator.txt',
+    'portfolio-4-nosql/evidence/03-consistency.txt',
+    'portfolio-4-nosql/evidence/04-queries.txt',
+    'portfolio-4-nosql/evidence/05-compare-postgres.txt',
+    'portfolio-4-nosql/evidence/06-collection-stats.txt',
+    'portfolio-4-nosql/evidence/07-benchmark.txt'
+)
+$missingFiles = @($p4Files | Where-Object { -not (Test-Path (Join-Path $repoRoot $_)) })
+if ($missingFiles.Count -eq 0) { Pass "11 P4 report and evidence files present" }
+else { Fail "missing P4 files: $($missingFiles -join ', ')" }
 
 # ----------------------------------------------------------------------------
 # Result

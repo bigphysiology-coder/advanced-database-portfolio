@@ -1,0 +1,598 @@
+﻿=== Query patterns Q1-Q6 with executionStats ===
+captured: 2026-10-28 19:18:01 +01:00
+host: RASHEED-PC
+
+=== Q1. Patient lab history, newest first ===
+patient: MRN-0003927 (6fba4876-0cce-4001-9909-7a0a7397c160)
+[
+  {
+    order_id: '599af456-0bb2-4001-9cbb-4a9334cfcb3a',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-10-23T14:10:00.000Z'),
+    reported_at: ISODate('2026-10-24T02:10:00.000Z'),
+    result_count: 4
+  },
+  {
+    order_id: '4a932e20-2aa2-46c3-ab11-9a3309bcd9c2',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-09-29T12:10:00.000Z'),
+    reported_at: ISODate('2026-09-30T00:10:00.000Z'),
+    result_count: 4
+  },
+  {
+    order_id: '9a4a65f1-3bb9-4254-a2b8-a9934ac8aa3c',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-09-29T12:10:00.000Z'),
+    reported_at: ISODate('2026-09-30T00:10:00.000Z'),
+    result_count: 4
+  },
+  {
+    order_id: '012f5a42-9b97-4a46-9404-544e957e71be',
+    test_code: 'COAG',
+    test_name: 'Coagulation Screen',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-09-05T10:10:00.000Z'),
+    reported_at: ISODate('2026-09-05T16:10:00.000Z'),
+    result_count: 2
+  },
+  {
+    order_id: '34f4be12-076b-40e0-a1c4-4ef89b178605',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-08-11T15:10:00.000Z'),
+    reported_at: ISODate('2026-08-12T03:10:00.000Z'),
+    result_count: 4
+  },
+  {
+    order_id: '5b2ddc62-18c1-49b6-a0e9-77be772e6d44',
+    test_code: 'COAG',
+    test_name: 'Coagulation Screen',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-08-11T15:10:00.000Z'),
+    reported_at: ISODate('2026-08-11T21:10:00.000Z'),
+    result_count: 2
+  },
+  {
+    order_id: '7b942660-5c6b-4096-8e2e-be6b30d5a701',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-07-18T13:10:00.000Z'),
+    reported_at: ISODate('2026-07-19T01:10:00.000Z'),
+    result_count: 4
+  }
+]
+Q1 explain: nReturned=7 keysExamined=7 docsExamined=7 executionTimeMillis=4 stages=FETCH -> IXSCAN[ix_patient_collected]
+
+=== Q2. Abnormal results across patients, last 30 days ===
+[
+  {
+    patient_mrn: 'MRN-0008624',
+    test_code: 'FBC',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Platelets',
+    value: 500,
+    unit: '10^9/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008455',
+    test_code: 'URIN',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'pH',
+    value: 10,
+    unit: 'pH units',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008442',
+    test_code: 'COAG',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Prothrombin time',
+    value: 17.5,
+    unit: 'seconds',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008624',
+    test_code: 'FBC',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Haemoglobin',
+    value: 218.75,
+    unit: 'g/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008624',
+    test_code: 'LIPID',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'LDL cholesterol',
+    value: 3.75,
+    unit: 'mmol/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008845',
+    test_code: 'LIPID',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Triglycerides',
+    value: 2.125,
+    unit: 'mmol/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008624',
+    test_code: 'FBC',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'MCV',
+    value: 60,
+    unit: 'fL',
+    flag: 'LOW'
+  },
+  {
+    patient_mrn: 'MRN-0008598',
+    test_code: 'LIPID',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'HDL cholesterol',
+    value: 0.75,
+    unit: 'mmol/L',
+    flag: 'LOW'
+  },
+  {
+    patient_mrn: 'MRN-0008624',
+    test_code: 'LIPID',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Total cholesterol',
+    value: 6.25,
+    unit: 'mmol/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008793',
+    test_code: 'COAG',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Prothrombin time',
+    value: 8.25,
+    unit: 'seconds',
+    flag: 'LOW'
+  },
+  {
+    patient_mrn: 'MRN-0008468',
+    test_code: 'UEC',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Potassium',
+    value: 2.625,
+    unit: 'mmol/L',
+    flag: 'LOW'
+  },
+  {
+    patient_mrn: 'MRN-0008624',
+    test_code: 'LIPID',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Triglycerides',
+    value: 2.125,
+    unit: 'mmol/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008468',
+    test_code: 'UEC',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Urea',
+    value: 1.875,
+    unit: 'mmol/L',
+    flag: 'LOW'
+  },
+  {
+    patient_mrn: 'MRN-0008845',
+    test_code: 'LIPID',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'HDL cholesterol',
+    value: 2.5,
+    unit: 'mmol/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008845',
+    test_code: 'LIPID',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'HDL cholesterol',
+    value: 0.75,
+    unit: 'mmol/L',
+    flag: 'LOW'
+  },
+  {
+    patient_mrn: 'MRN-0008650',
+    test_code: 'UEC',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Urea',
+    value: 1.875,
+    unit: 'mmol/L',
+    flag: 'LOW'
+  },
+  {
+    patient_mrn: 'MRN-0008663',
+    test_code: 'LFT',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'ALP',
+    value: 30,
+    unit: 'U/L',
+    flag: 'LOW'
+  },
+  {
+    patient_mrn: 'MRN-0008364',
+    test_code: 'TFT',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'Free T4',
+    value: 27.5,
+    unit: 'pmol/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008507',
+    test_code: 'LIPID',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'LDL cholesterol',
+    value: 3.75,
+    unit: 'mmol/L',
+    flag: 'HIGH'
+  },
+  {
+    patient_mrn: 'MRN-0008793',
+    test_code: 'COAG',
+    collected_at: ISODate('2026-10-25T16:40:00.000Z'),
+    analyte: 'INR',
+    value: 1.5,
+    unit: 'ratio',
+    flag: 'HIGH'
+  }
+]
+Q2 explain: nReturned=8816 keysExamined=10106 docsExamined=8816 executionTimeMillis=647 stages=PROJECTION_SIMPLE -> FETCH -> IXSCAN[ix_result_flag_collected] -> $unwind -> $match -> $project -> $sort
+
+=== Q3. Laboratory work queue: IN_PROGRESS, urgent first, oldest first ===
+[
+  {
+    order_id: '355a7cee-ada2-4210-b96a-437b53a232bc',
+    patient_mrn: 'MRN-0000183',
+    test_code: 'LFT',
+    test_name: 'Liver Function Tests',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:10:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: '46df2449-bd16-493f-877f-fe6f8e9fe8ac',
+    patient_mrn: 'MRN-0000092',
+    test_code: 'CRP',
+    test_name: 'C-Reactive Protein',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:10:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: '4bf110a7-599d-44b5-a1d2-e19c0aba9396',
+    patient_mrn: 'MRN-0000170',
+    test_code: 'LFT',
+    test_name: 'Liver Function Tests',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:10:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: '95e1c56a-e36a-4bcf-825c-4424cb269567',
+    patient_mrn: 'MRN-0000534',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:10:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: 'aa77332e-f97d-4d70-a620-5987849cd1ba',
+    patient_mrn: 'MRN-0000196',
+    test_code: 'MP',
+    test_name: 'Malaria Parasite Screen',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:10:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: 'ddff29a0-9a56-4f70-b97b-2f54f6c7c9e1',
+    patient_mrn: 'MRN-0000599',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:10:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: '06b6bb06-c290-46d0-ac50-60e48183d850',
+    patient_mrn: 'MRN-0000768',
+    test_code: 'TFT',
+    test_name: 'Thyroid Function Tests',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:40:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: '65bd8125-07ca-42eb-8532-c52938d493fa',
+    patient_mrn: 'MRN-0000820',
+    test_code: 'CRP',
+    test_name: 'C-Reactive Protein',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:40:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: '7210d5ed-32dc-46f9-a716-c47e514455d0',
+    patient_mrn: 'MRN-0001275',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:40:00.000Z'),
+    result_count: 0
+  },
+  {
+    order_id: '74217ea1-56b7-4bef-9572-37dedef852c0',
+    patient_mrn: 'MRN-0001184',
+    test_code: 'LIPID',
+    test_name: 'Lipid Profile',
+    priority: 'ROUTINE',
+    collected_at: ISODate('2026-07-18T10:40:00.000Z'),
+    result_count: 0
+  }
+]
+Q3 explain: nReturned=10 keysExamined=10 docsExamined=10 executionTimeMillis=0 stages=LIMIT -> FETCH -> IXSCAN[ix_status_priority_collected]
+
+=== Q4. Total cholesterol over time for MRN-0003927 ===
+[
+  {
+    collected_at: ISODate('2026-07-18T13:10:00.000Z'),
+    value: 0,
+    unit: 'mmol/L',
+    ref_low: 0,
+    ref_high: 5,
+    flag: 'NORMAL'
+  },
+  {
+    collected_at: ISODate('2026-08-11T15:10:00.000Z'),
+    value: 4.1,
+    unit: 'mmol/L',
+    ref_low: 0,
+    ref_high: 5,
+    flag: 'NORMAL'
+  },
+  {
+    collected_at: ISODate('2026-09-29T12:10:00.000Z'),
+    value: 0,
+    unit: 'mmol/L',
+    ref_low: 0,
+    ref_high: 5,
+    flag: 'NORMAL'
+  },
+  {
+    collected_at: ISODate('2026-09-29T12:10:00.000Z'),
+    value: 6.25,
+    unit: 'mmol/L',
+    ref_low: 0,
+    ref_high: 5,
+    flag: 'HIGH'
+  },
+  {
+    collected_at: ISODate('2026-10-23T14:10:00.000Z'),
+    value: 0,
+    unit: 'mmol/L',
+    ref_low: 0,
+    ref_high: 5,
+    flag: 'NORMAL'
+  }
+]
+Q4 explain: nReturned=5 keysExamined=5 docsExamined=5 executionTimeMillis=1 stages=PROJECTION_SIMPLE -> FETCH -> IXSCAN[ix_patient_analyte_collected] -> $unwind -> $match -> $project -> $sort
+
+=== Q5. Dashboard for collected_at >= 2026-07-29 (single $facet pass) ===
+[
+  {
+    by_status: [
+      {
+        _id: 'REPORTED',
+        orders: 58301,
+        results: 145144
+      },
+      {
+        _id: 'IN_PROGRESS',
+        orders: 8430,
+        results: 0
+      },
+      {
+        _id: 'COLLECTED',
+        orders: 8330,
+        results: 0
+      }
+    ],
+    by_test: [
+      {
+        _id: 'COAG',
+        orders: 7704,
+        avg_results: 1.5467289719626167
+      },
+      {
+        _id: 'MP',
+        orders: 7631,
+        avg_results: 0.7761761237059364
+      },
+      {
+        _id: 'CRP',
+        orders: 7540,
+        avg_results: 0.776790450928382
+      },
+      {
+        _id: 'LIPID',
+        orders: 7534,
+        avg_results: 3.094770374303159
+      },
+      {
+        _id: 'LFT',
+        orders: 7529,
+        avg_results: 3.096294328596095
+      },
+      {
+        _id: 'URIN',
+        orders: 7509,
+        avg_results: 1.574111066719936
+      },
+      {
+        _id: 'TFT',
+        orders: 7507,
+        avg_results: 1.5438923671240177
+      },
+      {
+        _id: 'UEC',
+        orders: 7447,
+        avg_results: 3.1228682691016516
+      },
+      {
+        _id: 'HBA1C',
+        orders: 7374,
+        avg_results: 0.7862761052346081
+      },
+      {
+        _id: 'FBC',
+        orders: 7286,
+        avg_results: 3.0683502607740873
+      }
+    ],
+    flags: [
+      {
+        _id: 'NORMAL',
+        n: 107958
+      },
+      {
+        _id: 'LOW',
+        n: 23223
+      },
+      {
+        _id: 'HIGH',
+        n: 13963
+      }
+    ],
+    turnaround: [
+      {
+        _id: 'TFT',
+        avg_hours: 24,
+        n: 5795
+      },
+      {
+        _id: 'HBA1C',
+        avg_hours: 12,
+        n: 5798
+      },
+      {
+        _id: 'LFT',
+        avg_hours: 12,
+        n: 5828
+      },
+      {
+        _id: 'LIPID',
+        avg_hours: 12,
+        n: 5829
+      },
+      {
+        _id: 'UEC',
+        avg_hours: 6,
+        n: 5814
+      },
+      {
+        _id: 'COAG',
+        avg_hours: 6,
+        n: 5958
+      },
+      {
+        _id: 'FBC',
+        avg_hours: 4,
+        n: 5589
+      },
+      {
+        _id: 'CRP',
+        avg_hours: 4,
+        n: 5857
+      },
+      {
+        _id: 'MP',
+        avg_hours: 2,
+        n: 5923
+      },
+      {
+        _id: 'URIN',
+        avg_hours: 2,
+        n: 5910
+      }
+    ]
+  }
+]
+Q5 explain: nReturned=75061 keysExamined=75061 docsExamined=75061 executionTimeMillis=3532 stages=PROJECTION_SIMPLE -> FETCH -> IXSCAN[ix_collected] -> $facet
+
+=== Q6. Cross-store reference check with $lookup ===
+patient_refs lookup by MRN (ux_patient_mrn): 6fba4876-0cce-4001-9909-7a0a7397c160
+[
+  {
+    order_id: '599af456-0bb2-4001-9cbb-4a9334cfcb3a',
+    patient_mrn: 'MRN-0003927',
+    test_code: 'LIPID',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-10-23T14:10:00.000Z'),
+    referenced_mrn: 'MRN-0003927',
+    mrn_matches: true
+  },
+  {
+    order_id: '4a932e20-2aa2-46c3-ab11-9a3309bcd9c2',
+    patient_mrn: 'MRN-0003927',
+    test_code: 'LIPID',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-09-29T12:10:00.000Z'),
+    referenced_mrn: 'MRN-0003927',
+    mrn_matches: true
+  },
+  {
+    order_id: '9a4a65f1-3bb9-4254-a2b8-a9934ac8aa3c',
+    patient_mrn: 'MRN-0003927',
+    test_code: 'LIPID',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-09-29T12:10:00.000Z'),
+    referenced_mrn: 'MRN-0003927',
+    mrn_matches: true
+  },
+  {
+    order_id: '012f5a42-9b97-4a46-9404-544e957e71be',
+    patient_mrn: 'MRN-0003927',
+    test_code: 'COAG',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-09-05T10:10:00.000Z'),
+    referenced_mrn: 'MRN-0003927',
+    mrn_matches: true
+  },
+  {
+    order_id: '34f4be12-076b-40e0-a1c4-4ef89b178605',
+    patient_mrn: 'MRN-0003927',
+    test_code: 'LIPID',
+    status: 'REPORTED',
+    collected_at: ISODate('2026-08-11T15:10:00.000Z'),
+    referenced_mrn: 'MRN-0003927',
+    mrn_matches: true
+  }
+]
+
+=== Collection summary ===
+{
+  documents: 93885,
+  result_rows: 163387,
+  patient_refs: 15200
+}
+
+exit: 0 (elapsed 28.4s)

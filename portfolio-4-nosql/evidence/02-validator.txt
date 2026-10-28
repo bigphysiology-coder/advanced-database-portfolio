@@ -1,0 +1,22 @@
+﻿=== Validator: accepted and rejected documents ===
+captured: 2026-10-28 19:17:11 +01:00
+host: RASHEED-PC
+
+=== Validator tests: lab_results ===
+cleanup: removed 0 test document(s)
+PASS  valid REPORTED document with one result (accepted)
+PASS  IN_PROGRESS document with empty results (accepted)
+PASS  missing required test_code (code 121 DocumentValidationFailure)
+PASS  REPORTED with empty results (code 121 DocumentValidationFailure)
+PASS  ordered_at as a string, not a BSON date (code 121 DocumentValidationFailure)
+PASS  result flag outside the closed enum (code 121 DocumentValidationFailure)
+PASS  patient_mrn that does not match ^MRN-[0-9]{7}$ (code 121 DocumentValidationFailure)
+PASS  negative result_count (code 121 DocumentValidationFailure)
+PASS  duplicate order_id (code 11000 DuplicateKey)
+PASS  value_type outside the closed enum (code 121 DocumentValidationFailure)
+PASS  result without a resulted_at date (code 121 DocumentValidationFailure)
+
+validator tests: 11 passed, 0 failed
+cleanup: removed 2 test document(s)
+
+exit: 0 (elapsed 3.3s)

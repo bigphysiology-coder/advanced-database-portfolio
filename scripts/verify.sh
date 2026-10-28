@@ -3,12 +3,19 @@
 # Verify that the Docker environment is fully initialised.
 # Portable counterpart to verify.ps1 — for macOS, Linux, WSL or Git Bash.
 #
+# Checks containers, PostgreSQL schema/seed data, the MongoDB P4 collection
+# when it is loaded, and the committed P4 report/evidence files.
+#
 # Usage:  bash scripts/verify.sh
+#         MONGOSH=/path/to/mongosh bash scripts/verify.sh
 # Exit:   0 = all checks passed, 1 = something is wrong
 # ============================================================================
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
+
+MONGOSH=${MONGOSH:-mongosh}
+MONGO_URI='mongodb://portfolio:portfolio@localhost:27017/hospital_labs?authSource=admin'
 
 FAILURES=0
 pass() { printf '  PASS  %s\n' "$1"; }
@@ -123,12 +130,98 @@ section "MongoDB"
 if [ "$MONGO_RUNNING" -ne 1 ]; then
     printf '  WARN  skipped - container not running (required from Portfolio 4)\n'
 else
-    mongo_ok=$(docker compose exec -T mongodb mongosh --quiet \
-        --username portfolio --password portfolio \
-        --authenticationDatabase admin \
-        --eval "db.adminCommand({ ping: 1 }).ok" 2>/dev/null | tr -d '\r')
-    if [ "$mongo_ok" = "1" ]; then pass "responding to authenticated ping"; else fail "unexpected response: '$mongo_ok'"; fi
+    # The official mongo image ships mongosh; a locally built fallback image
+    # may not. Prefer the container shell, then a host shell via MONGOSH.
+    if docker exec portfolio-mongodb sh -c 'command -v mongosh >/dev/null 2>&1'; then
+        MONGO_IN_CONTAINER=1
+    else
+        MONGO_IN_CONTAINER=0
+    fi
+    HOST_MONGO=$(command -v "$MONGOSH" 2>/dev/null || true)
+
+    if [ "$MONGO_IN_CONTAINER" -ne 1 ] && [ -z "$HOST_MONGO" ]; then
+        printf '  WARN  mongosh not found in the container or on PATH; P4 collection checks skipped\n'
+    else
+        run_mongo_file() {
+            file=$1
+            if [ "$MONGO_IN_CONTAINER" -eq 1 ]; then
+                docker exec -i portfolio-mongodb mongosh --quiet \
+                    --username portfolio --password portfolio \
+                    --authenticationDatabase admin hospital_labs \
+                    < "$file" 2>&1 | tr -d '\r'
+            else
+                "$MONGOSH" --quiet "$MONGO_URI" --file "$file" 2>&1 | tr -d '\r'
+            fi
+        }
+
+        tmp_js=$(mktemp "${TMPDIR:-/tmp}/verify-p4.XXXXXX.js")
+        trap 'rm -f "$tmp_js"' EXIT
+
+        printf 'print(db.adminCommand({ ping: 1 }).ok)\n' > "$tmp_js"
+        mongo_ok=$(run_mongo_file "$tmp_js" | tail -1)
+        if [ "$mongo_ok" = "1" ]; then pass "responding to authenticated ping"; else fail "unexpected ping response: '$mongo_ok'"; fi
+
+        cat > "$tmp_js" <<'JS'
+const hasLab = db.getCollectionNames().indexOf("lab_results") >= 0;
+const hasRefs = db.getCollectionNames().indexOf("patient_refs") >= 0;
+const docs = hasLab ? db.lab_results.countDocuments({}) : 0;
+const results = hasLab
+    ? (db.lab_results.aggregate([{ $group: { _id: null, n: { $sum: "$result_count" } } }]).toArray()[0] || { n: 0 }).n
+    : 0;
+const refs = hasRefs ? db.patient_refs.countDocuments({}) : 0;
+const indexes = hasLab ? db.lab_results.getIndexes().map(i => i.name).sort().join(",") : "";
+print("exists=" + (hasLab ? 1 : 0));
+print("documents=" + docs);
+print("results=" + results);
+print("refs=" + refs);
+print("indexes=" + indexes);
+JS
+        mongo_stats=$(run_mongo_file "$tmp_js")
+
+        mongo_field() { printf '%s\n' "$mongo_stats" | sed -n "s/^$1=//p" | tail -1; }
+        exists=$(mongo_field exists)
+        documents=$(mongo_field documents)
+        results=$(mongo_field results)
+        refs=$(mongo_field refs)
+        indexes=$(mongo_field indexes)
+
+        if [ "$exists" != "1" ] || [ "${documents:-0}" -eq 0 ] 2>/dev/null; then
+            printf '  WARN  P4 collection not loaded; run: powershell -File scripts/load-p4.ps1\n'
+        else
+            if [ "$documents" = "93885" ]; then pass "lab_results documents = 93885"; else fail "lab_results documents = '$documents', expected 93885 (reload P4)"; fi
+            if [ "$results" = "163387" ]; then pass "embedded result rows = 163387"; else fail "embedded result rows = '$results', expected 163387"; fi
+            if [ "$refs" = "15200" ]; then pass "patient_refs documents = 15200"; else fail "patient_refs documents = '$refs', expected 15200"; fi
+
+            missing_indexes=""
+            for index in ux_order_id ix_patient_collected ix_status_priority_collected \
+                         ix_result_flag_collected ix_patient_analyte_collected ix_collected; do
+                case ",$indexes," in
+                    *",$index,"*) ;;
+                    *) missing_indexes="$missing_indexes $index" ;;
+                esac
+            done
+            if [ -z "$missing_indexes" ]; then pass "all six P4 indexes present"; else fail "missing P4 indexes:$missing_indexes"; fi
+        fi
+    fi
 fi
+
+section "Portfolio 4 artefacts"
+missing_p4=""
+for file in \
+    portfolio-4-nosql/model-design.md \
+    portfolio-4-nosql/README.md \
+    portfolio-4-nosql/sample-documents.json \
+    portfolio-4-nosql/evidence/00-environment.txt \
+    portfolio-4-nosql/evidence/01-load.txt \
+    portfolio-4-nosql/evidence/02-validator.txt \
+    portfolio-4-nosql/evidence/03-consistency.txt \
+    portfolio-4-nosql/evidence/04-queries.txt \
+    portfolio-4-nosql/evidence/05-compare-postgres.txt \
+    portfolio-4-nosql/evidence/06-collection-stats.txt \
+    portfolio-4-nosql/evidence/07-benchmark.txt; do
+    [ -f "$file" ] || missing_p4="$missing_p4 $file"
+done
+if [ -z "$missing_p4" ]; then pass "11 P4 report and evidence files present"; else fail "missing P4 files:$missing_p4"; fi
 
 section "Result"
 if [ "$FAILURES" -eq 0 ]; then
