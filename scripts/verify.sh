@@ -4,7 +4,7 @@
 # Portable counterpart to verify.ps1 — for macOS, Linux, WSL or Git Bash.
 #
 # Checks containers, PostgreSQL schema/seed data, the MongoDB P4 collection
-# when it is loaded, and the committed P4 report/evidence files.
+# when it is loaded, and the committed P4 and P5 report/evidence files.
 #
 # Usage:  bash scripts/verify.sh
 #         MONGOSH=/path/to/mongosh bash scripts/verify.sh
@@ -222,6 +222,29 @@ for file in \
     [ -f "$file" ] || missing_p4="$missing_p4 $file"
 done
 if [ -z "$missing_p4" ]; then pass "11 P4 report and evidence files present"; else fail "missing P4 files:$missing_p4"; fi
+
+section "Portfolio 5 artefacts"
+missing_p5=""
+for file in \
+    portfolio-5-distributed-cloud/README.md \
+    portfolio-5-distributed-cloud/architecture.md \
+    portfolio-5-distributed-cloud/replication-setup.ps1 \
+    portfolio-5-distributed-cloud/config/README.md \
+    portfolio-5-distributed-cloud/config/primary.conf \
+    portfolio-5-distributed-cloud/config/replica.conf \
+    portfolio-5-distributed-cloud/config/pg_hba-replication.conf \
+    portfolio-5-distributed-cloud/evidence/00-environment.txt \
+    portfolio-5-distributed-cloud/evidence/01-setup.txt \
+    portfolio-5-distributed-cloud/evidence/02-replication.txt \
+    portfolio-5-distributed-cloud/evidence/03-lag.txt \
+    portfolio-5-distributed-cloud/evidence/04-sync-vs-async.txt \
+    portfolio-5-distributed-cloud/evidence/05-stale-read.txt \
+    portfolio-5-distributed-cloud/evidence/06-configs.txt \
+    portfolio-5-distributed-cloud/evidence/07-failover.txt \
+    scripts/capture-p5.ps1; do
+    [ -f "$file" ] || missing_p5="$missing_p5 $file"
+done
+if [ -z "$missing_p5" ]; then pass "16 P5 report, config and evidence files present"; else fail "missing P5 files:$missing_p5"; fi
 
 section "Result"
 if [ "$FAILURES" -eq 0 ]; then

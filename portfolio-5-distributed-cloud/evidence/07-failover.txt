@@ -1,0 +1,49 @@
+﻿=== Primary failure, promotion and post-failover write ===
+captured: 2026-10-29 08:01:12 +01:00
+host: RASHEED-PC
+
+before failover: p5_probe=50022 patient=20000 lab_order=93889
+   application_name   |   state   | sync_state | lag_bytes 
+----------------------+-----------+------------+-----------
+ portfolio-p5-replica | streaming | async      |         0
+(1 row)
+
+=== stop the primary ===
+primary stopped in 1,973.4 ms
+=== promote the replica ===
+ pg_promote 
+------------
+ t
+(1 row)
+
+pg_promote call: 1,698.7 ms; promotion complete: 2,946.7 ms; in_recovery=f
+=== the promoted replica accepts writes ===
+ in_recovery | read_only 
+-------------+-----------
+ f           | off
+(1 row)
+
+ probe_id |     batch     |              note               
+----------+---------------+---------------------------------
+    50029 | post-failover | written to the promoted replica
+(1 row)
+
+INSERT 0 1
+ probe_rows_after 
+------------------
+            50023
+(1 row)
+
+after failover:  p5_probe=50023 patient=20000 lab_order=93889
+rows lost from the caught-up replica: 0 (0 because the replica had replayed to the primary LSN before promotion)
+=== no upstream remains ===
+ upstreams 
+-----------
+         0
+(1 row)
+
+=== container state after promotion ===
+portfolio-p5-replica | Up About a minute
+portfolio-p5-primary | Exited (0) 8 seconds ago
+
+exit: 0 (elapsed 22.9s)

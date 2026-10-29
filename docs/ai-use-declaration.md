@@ -12,7 +12,7 @@ This file is maintained as work progresses. It is not reconstructed at submissio
 
 | Tool | Version / model | Period of use |
 |---|---|---|
-| OpenCode (AI coding agent) | DeepSeek V4.1 Flash Free | 25-28 October 2026 |
+| OpenCode (AI coding agent) | DeepSeek V4.1 Flash Free | 25-29 October 2026 |
 
 ---
 
@@ -249,6 +249,76 @@ idempotent; duplicating the patient master in MongoDB — `patient_refs` is a de
 identifier projection only; hiding validator gaps behind application code — the gaps and
 the reconciliation checks are named in `model-design.md`; and cropped screenshots — the
 evidence is raw command output with exit codes, so it can be re-run and diffed.
+
+---
+
+### Entry 6 — 29 October 2026 — Distributed replication and evidence capture
+
+**Tool:** OpenCode, model DeepSeek V4.1 Flash Free.
+
+**Task:** build and document the Portfolio 5 distributed-database exercise on the
+existing Riverbend case study: a PostgreSQL primary and hot-standby replica, a
+reproducible setup/failover harness, a lag measurement, a read-your-writes stale-read
+demonstration with a mitigation, config fragments and a single-run evidence capture.
+
+**Prompt (summarised):** "Deploy one PostgreSQL primary and one streaming replica with
+Docker. Show `pg_stat_replication` streaming, a write on the primary visible on the replica,
+measured commit-to-visible lag under a burst insert, a stale read with a working lag-aware
+mitigation, synchronous versus asynchronous commit, and a manual promotion that accepts
+writes. Keep it isolated from the P1-P4 database, capture raw terminal output, and be explicit
+about RPO/RTO and what the single-host demo does not prove."
+
+**Output used:** `portfolio-5-distributed-cloud/replication-setup.ps1`,
+`config/primary.conf`, `config/replica.conf`, `config/pg_hba-replication.conf`,
+`config/README.md`, `README.md`, `architecture.md`, `evidence/00`-`07` and
+`scripts/capture-p5.ps1`; plus the P5 checks and root README updates.
+
+**Verification performed:** the final evidence is one complete
+`scripts/capture-p5.ps1` run (exit 0) captured on 29 October 2026 at 07:55 +01:00,
+after a clean `up -Force` rebuild. Every number quoted in the P5 README and
+architecture document was checked against those files before it was written:
+`state=streaming`, `sync_state=async`, identical sent/replay LSNs, a
+6.173 ms primary insert and 5.015 ms replica read with the same timestamp,
+525.469 ms commit-to-visible lag for 50,000 rows, synchronous/async medians of
+16.913/6.971 ms, a 0-row stale read with 296 unapplied bytes, the router returning
+1 row from the primary, a 2,946.7 ms promotion, a post-failover insert, and 0 rows
+lost after catch-up. The live `SHOW` values and `postgresql.auto.conf` were compared
+with the committed config fragments. The final P5 database contained 20,000 patients
+and 93,889 lab orders, and the P5 containers were separate from `portfolio-postgres`
+throughout; the P1-P4 data was not modified. `scripts/verify.ps1` and `verify.sh`
+were extended to check the P5 report, config and evidence files; `verify.sh` was
+syntax-checked with `bash -n` inside the PostgreSQL container because this Windows
+host has no usable Bash.
+
+**Corrections made:** the first harness run failed because the PostgreSQL Docker
+entrypoint answers `pg_isready` during its temporary init server and then shuts it
+down; readiness now requires three consecutive successful `SELECT 1` checks over
+four seconds. The first evidence capture failed at the log step because Windows
+PowerShell 5.1 treated `docker logs` output on stderr as a terminating error; the
+capture now merges Docker's streams through `cmd /c` and records partial output
+before a failure. The config fragments were initially UTF-8 without a BOM, so
+PowerShell 5.1's default `Get-Content` rendered em dashes and a section sign as
+mojibake in `06-configs.txt`; the fragments were made ASCII-only and the reader now
+specifies UTF-8. Promotion timing originally included `Invoke-Sql`'s temp-file copy;
+the failover step now calls `psql -c "SELECT pg_promote(...)"` directly. The sync
+comparison was increased from five to ten commits per mode after the first five-sample
+run was too noisy to support a median claim. The capture's config listing originally
+printed PowerShell formatting objects (`FormatStartData` etc.), which were replaced
+with plain file lines and file contents. The TODO `replication-setup.sh` skeleton was
+removed rather than shipped unimplemented; the tested path is the PowerShell harness.
+An early assumption that `synchronous_commit=on` alone made replication synchronous was
+wrong and is corrected in the report: `synchronous_standby_names` is what creates
+`sync_state=quorum`.
+
+**Rejected / not used:** using synchronous replication as the default for every write
+(the primary would stall when the standby is unavailable); claiming the controlled
+0-row loss proves async RPO is zero (it does not: the failover waited for catch-up);
+automatic failover with Patroni or a managed multi-AZ service (useful production
+recommendation, not demonstrated here); sharding at 317 MB and 20,000 patients
+(premature without a measured bottleneck); a replication slot (bounded `wal_keep_size`
+is safer for this demo); and cropped screenshots (the evidence is raw command output
+that can be re-run and diffed). Exploratory runs used to debug the harness are not
+quoted; the report uses only the final clean capture.
 
 ---
 

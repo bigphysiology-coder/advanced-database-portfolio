@@ -1,0 +1,56 @@
+﻿=== Read-your-writes stale read, router and recovery ===
+captured: 2026-10-29 08:00:49 +01:00
+host: RASHEED-PC
+
+=== pause WAL replay on the replica ===
+ pg_wal_replay_pause 
+---------------------
+ 
+(1 row)
+
+=== write on the primary ===
+INSERT 0 1
+ xmin |         committed_at          
+------+-------------------------------
+  920 | 2026-10-29 07:00:52.940614+00
+(1 row)
+
+=== the immediate read on the replica is stale ===
+ stale_rows 
+------------
+          0
+(1 row)
+
+ in_recovery | received_lsn | replayed_lsn | unapplied_bytes 
+-------------+--------------+--------------+-----------------
+ t           | 0/21BF37B8   | 0/21BF3690   |             296
+(1 row)
+
+=== lag-aware router: compare primary LSN with replica replay LSN ===
+primary_lsn=0/21BF37B8 replica_replay_lsn=0/21BF3690 lag_bytes=296
+router: lag > 0 -> send this read to the PRIMARY
+ router_rows 
+-------------
+           1
+(1 row)
+
+=== resume replay and wait for the row ===
+ pg_wal_replay_resume 
+----------------------
+ 
+(1 row)
+
+psql:/tmp/p5-stale-wait.sql:23: NOTICE:  after resume: rows=1 committed_at=2026-10-29 07:00:52.940614+00 observed_at=2026-10-29 07:01:01.96755+00 lag_ms=9026.936 poll_wait_ms=3.240
+DO
+=== the row is now visible, and the router chooses the replica ===
+primary_lsn=0/21BF37B8 replica_replay_lsn=0/21BF37B8 lag_bytes=0
+router: replica is caught up -> send this read to the REPLICA
+ router_rows 
+-------------
+           1
+(1 row)
+
+The paused-replay lag_ms is the intentional pause duration, not the normal
+replication lag measured in 03-lag.txt.
+
+exit: 0 (elapsed 17.5s)

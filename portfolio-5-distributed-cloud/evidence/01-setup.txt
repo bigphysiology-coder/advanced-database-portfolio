@@ -1,0 +1,71 @@
+﻿=== Destroy and rebuild the P5 primary and replica ===
+captured: 2026-10-29 07:55:22 +01:00
+host: RASHEED-PC
+
+This step is destructive: it removes the P5 containers, volumes and network,
+then creates a new primary, loads schema.sql and seed-data.sql, takes a
+pg_basebackup, and starts the replica.
+P5 containers before the rebuild (may be empty or from a previous run):
+portfolio-p5-replica | postgres:16 | Up 3 minutes
+portfolio-p5-primary | postgres:16 | Exited (0) 2 minutes ago
+removing the previous P5 containers, volumes and network
+creating the network
+starting the primary
+loading schema.sql
+loading seed-data.sql (this is the slow step)
+INSERT 0 164292
+UPDATE 164292
+VACUUM
+   table_name    | count  
+-----------------+--------
+ admission       |    870
+ appointment     |  82000
+ audit_log       | 227176
+ bed             |     60
+ department      |     10
+ diagnosis       |  93889
+ doctor_profile  |     50
+ doctor_schedule |    250
+ encounter       |  62588
+ lab_order       |  93889
+ lab_result      | 164292
+ next_of_kin     |  11983
+ patient         |  20000
+ prescription    | 125176
+ staff           |     86
+ vitals          |  62588
+ ward            |      6
+(17 rows)
+
+DROP FUNCTION
+creating the replication role, probe table and pg_hba entry
+CREATE TABLE
+CREATE INDEX
+DO
+ patients | lab_orders 
+----------+------------
+    20000 |      93889
+(1 row)
+
+taking the base backup
+waiting for checkpoint
+    75/342942 kB (0%), 0/1 tablespace
+ 37952/342942 kB (11%), 0/1 tablespace
+209222/342942 kB (61%), 0/1 tablespace
+268986/342942 kB (78%), 0/1 tablespace
+270394/342942 kB (78%), 0/1 tablespace
+320529/342942 kB (93%), 0/1 tablespace
+342953/342953 kB (100%), 0/1 tablespace
+342953/342953 kB (100%), 1/1 tablespace
+starting the replica
+
+primary and replica are streaming
+   application_name   | client_addr |   state   | sync_state |  sent_lsn  | replay_lsn | lag_bytes 
+----------------------+-------------+-----------+------------+------------+------------+-----------
+ portfolio-p5-replica | 172.19.0.3  | streaming | async      | 0/21000060 | 0/21000060 |         0
+(1 row)
+
+portfolio-p5-replica | postgres:16 | Up 15 seconds
+portfolio-p5-primary | postgres:16 | Up 4 minutes
+
+exit: 0 (elapsed 300.1s)

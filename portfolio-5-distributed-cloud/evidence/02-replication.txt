@@ -1,0 +1,91 @@
+﻿=== Streaming replication, write/read path and logs ===
+captured: 2026-10-29 08:00:23 +01:00
+host: RASHEED-PC
+
+=== primary: pg_stat_replication ===
+ pid |   application_name   | client_addr |   state   | sync_state |  sent_lsn  | write_lsn  | flush_lsn  | replay_lsn | lag_bytes |   replay_lag    
+-----+----------------------+-------------+-----------+------------+------------+------------+------------+------------+-----------+-----------------
+ 195 | portfolio-p5-replica | 172.19.0.3  | streaming | async      | 0/21022D60 | 0/21022D60 | 0/21022D60 | 0/21022D60 |         0 | 00:00:00.006294
+(1 row)
+
+=== replica: recovery state ===
+ in_recovery | read_only | received_lsn | replayed_lsn | unapplied_bytes | replay_age 
+-------------+-----------+--------------+--------------+-----------------+------------
+ t           | on        | 0/21022D60   | 0/21022D60   |               0 | 
+(1 row)
+
+=== write on the primary, read on the replica ===
+Timing is on.
+INSERT 0 1
+Time: 6.173 ms
+ probe_id |      batch       |          note          |         created_at          
+----------+------------------+------------------------+-----------------------------
+        1 | status-080027011 | written on the primary | 2026-10-29 07:00:28.2126+00
+(1 row)
+
+Time: 5.015 ms
+ probe_id |      batch       |          note          |         created_at          
+----------+------------------+------------------------+-----------------------------
+        1 | status-080027011 | written on the primary | 2026-10-29 07:00:28.2126+00
+(1 row)
+
+=== primary log (tail) ===
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+
+Success. You can now start the database server using:
+
+    pg_ctl -D /var/lib/postgresql/data -l logfile start
+
+waiting for server to start....2026-10-29 06:55:40.362 UTC [79] LOG:  starting PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-10-29 06:55:40.389 UTC [79] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-10-29 06:55:40.445 UTC [83] LOG:  database system was shut down at 2026-10-29 06:55:38 UTC
+2026-10-29 06:55:40.493 UTC [79] LOG:  database system is ready to accept connections
+ done
+server started
+2026-10-29 06:55:40.631 UTC [95] FATAL:  database "hospital" does not exist
+CREATE DATABASE
+
+
+/usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+
+waiting for server to shut down...2026-10-29 06:55:41.032 UTC [79] LOG:  received fast shutdown request
+.2026-10-29 06:55:41.047 UTC [79] LOG:  aborting any active transactions
+2026-10-29 06:55:41.054 UTC [79] LOG:  background worker "logical replication launcher" (PID 92) exited with exit code 1
+2026-10-29 06:55:41.054 UTC [81] LOG:  shutting down
+2026-10-29 06:55:41.064 UTC [81] LOG:  checkpoint starting: shutdown immediate
+2026-10-29 06:55:41.825 UTC [81] LOG:  checkpoint complete: wrote 927 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.143 s, sync=0.543 s, total=0.771 s; sync files=302, longest=0.020 s, average=0.002 s; distance=4273 kB, estimate=4273 kB; lsn=0/191F128, redo lsn=0/191F128
+2026-10-29 06:55:41.851 UTC [79] LOG:  database system is shut down
+ done
+server stopped
+
+PostgreSQL init process complete; ready for start up.
+
+2026-10-29 06:55:42.128 UTC [1] LOG:  starting PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-10-29 06:55:42.129 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-10-29 06:55:42.129 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-10-29 06:55:42.147 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-10-29 06:55:42.178 UTC [110] LOG:  database system was shut down at 2026-10-29 06:55:41 UTC
+2026-10-29 06:55:42.193 UTC [1] LOG:  database system is ready to accept connections
+2026-10-29 06:59:42.534 UTC [1] LOG:  received SIGHUP, reloading configuration files
+2026-10-29 06:59:47.699 UTC [108] LOG:  checkpoint starting: immediate force wait
+2026-10-29 06:59:51.210 UTC [108] LOG:  checkpoint complete: wrote 9966 buffers (60.8%); 0 WAL file(s) added, 0 removed, 15 recycled; write=0.847 s, sync=2.272 s, total=3.512 s; sync files=249, longest=0.330 s, average=0.010 s; distance=498563 kB, estimate=498563 kB; lsn=0/20000060, redo lsn=0/20000028
+=== replica log (tail) ===
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2026-10-29 07:00:09.188 UTC [1] LOG:  starting PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-10-29 07:00:09.190 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-10-29 07:00:09.190 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-10-29 07:00:09.218 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-10-29 07:00:09.273 UTC [36] LOG:  database system was interrupted; last known up at 2026-10-29 06:59:50 UTC
+2026-10-29 07:00:11.006 UTC [43] FATAL:  the database system is starting up
+2026-10-29 07:00:12.210 UTC [36] LOG:  entering standby mode
+2026-10-29 07:00:12.212 UTC [36] LOG:  starting backup recovery with redo LSN 0/20000028, checkpoint LSN 0/20000060, on timeline ID 1
+2026-10-29 07:00:12.244 UTC [36] LOG:  redo starts at 0/20000028
+2026-10-29 07:00:12.255 UTC [36] LOG:  completed backup recovery with redo LSN 0/20000028 and end LSN 0/20000138
+2026-10-29 07:00:12.255 UTC [36] LOG:  consistent recovery state reached at 0/20000138
+2026-10-29 07:00:12.255 UTC [1] LOG:  database system is ready to accept read-only connections
+2026-10-29 07:00:12.324 UTC [50] LOG:  started streaming WAL from primary at 0/21000000 on timeline 1
+
+exit: 0 (elapsed 7.6s)

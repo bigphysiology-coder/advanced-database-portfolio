@@ -1,0 +1,15 @@
+﻿=== Host, Docker and PostgreSQL environment ===
+captured: 2026-10-29 07:55:12 +01:00
+host: RASHEED-PC
+
+os: Microsoft Windows NT 10.0.22631.0
+powershell: 5.1.22621.6133
+captured at: 2026-10-29 07:55:12 +01:00
+base git commit: 329901c0267c2073c85742f120d2d96ff0c04fe3
+client 29.5.3 server 29.5.3
+server 29.5.3 os=Docker Desktop (containerized) cpus=4 memory=4046016512
+postgres:16 9e2cf6287f25 642MB
+disk C: used=471.7GB free=4.3GB
+The P5 cluster is rebuilt in step 01; Portfolios 1-4 use portfolio-postgres.
+
+exit: 0 (elapsed 9.6s)

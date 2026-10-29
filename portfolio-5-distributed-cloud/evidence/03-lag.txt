@@ -1,0 +1,23 @@
+﻿=== Measured commit-to-visible replication lag ===
+captured: 2026-10-29 08:00:30 +01:00
+host: RASHEED-PC
+
+burst size: 50000 rows
+=== burst insert: 50000 rows (batch lag-61399cbdd6b6) ===
+Timing is on.
+INSERT 0 50000
+Time: 1427.431 ms (00:01.427)
+ primary_rows 
+--------------
+        50000
+(1 row)
+
+Time: 24.955 ms
+DO
+psql:/tmp/p5-lag-wait.sql:29: NOTICE:  RESULT batch=lag-61399cbdd6b6 rows=50000 committed_at=2026-10-29 07:00:35.573895+00 observed_at=2026-10-29 07:00:36.099364+00 lag_ms=525.469 poll_wait_ms=2787.977
+measured visibility delay: 525.469 ms for 50000 rows
+The replica-side poll starts before the primary insert. lag_ms is measured
+from the commit timestamp (track_commit_timestamp=on) to the moment the
+replica first sees all rows. poll_wait_ms includes the insert itself.
+
+exit: 0 (elapsed 5.9s)

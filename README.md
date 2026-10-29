@@ -69,7 +69,7 @@ Relevant because the repository is public.
 | 2 | Query Processing and Optimisation | 7 | [`portfolio-2-query-optimisation/`](portfolio-2-query-optimisation/) | complete |
 | 3 | Transactions and Concurrency | 7 | [`portfolio-3-transactions-concurrency/`](portfolio-3-transactions-concurrency/) | complete |
 | 4 | NoSQL and Advanced Data Models | 7 | [`portfolio-4-nosql/`](portfolio-4-nosql/) | complete |
-| 5 | Distributed and Cloud Database | 6 | [`portfolio-5-distributed-cloud/`](portfolio-5-distributed-cloud/) | _pending_ |
+| 5 | Distributed and Cloud Database | 6 | [`portfolio-5-distributed-cloud/`](portfolio-5-distributed-cloud/) | complete |
 | — | Final Documentation and Reflection | 6 | [`final-documentation/`](final-documentation/) | _pending_ |
 
 ---
@@ -93,6 +93,7 @@ advanced-database-portfolio/
 │   ├── capture-p3.ps1         <- P3 two-session evidence capture and cleanup
 │   ├── load-p4.ps1            <- P4 PostgreSQL export -> MongoDB load/transform
 │   ├── capture-p4.ps1         <- P4 evidence capture and document export
+│   ├── capture-p5.ps1         <- P5 replication/failover evidence capture
 │   └── puppeteer.json         <- renderer config (uses system Chrome, no Chromium download)
 ├── portfolio-1-database-design/
 │   ├── schema.sql                     <- DDL: 21 relations, keys, constraints, triggers
@@ -130,9 +131,11 @@ advanced-database-portfolio/
 │   ├── sample-documents.json  <- real Extended JSON documents
 │   └── evidence/              <- raw load, validator, query and size captures
 ├── portfolio-5-distributed-cloud/
+│   ├── README.md              <- P5 results, evidence index and reproduction
 │   ├── architecture.md        <- replication / sharding / consistency reasoning
-│   ├── replication-setup.sh   <- deployment evidence
-│   └── config/
+│   ├── replication-setup.ps1  <- primary + replica deployment and failover
+│   ├── config/                <- primary/replica/pg_hba fragments
+│   └── evidence/              <- raw replication, lag, stale-read and failover output
 └── final-documentation/
     ├── portfolio-summary.md   <- the 2-3 page LMS submission
     └── reflection.md          <- individual technical reflection
@@ -207,6 +210,36 @@ The loader exports PostgreSQL to NDJSON, stages it, converts the dates and `$mer
 documents into the validated collection. `scripts/capture-p4.ps1` regenerates the P4
 evidence and `sample-documents.json`.
 
+### Portfolio 5 Replication Cluster
+
+Portfolio 5 uses its own primary and hot-standby replica, `portfolio-p5-primary` and
+`portfolio-p5-replica`, on the private Docker network `portfolio-p5-repl`. It does not
+reuse `portfolio-postgres`, and it publishes no host ports. The setup is destructive because
+it reloads the full seed data into a clean P5 volume:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  portfolio-5-distributed-cloud/replication-setup.ps1 up -Force
+
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  portfolio-5-distributed-cloud/replication-setup.ps1 status
+```
+
+`up -Force` removes the previous P5 containers, volumes and network, creates the primary,
+loads `schema.sql` and `seed-data.sql`, takes a `pg_basebackup`, and starts the replica.
+The other actions are `lag`, `sync`, `stale`, `configs`, `failover` and `down`. After
+`failover`, the original primary is stopped and the promoted replica is the only writable
+node; run `up -Force` to return to the two-node topology.
+
+To regenerate the P5 evidence in one run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/capture-p5.ps1
+```
+
+That capture is also destructive and reloads the seed. Use `-SkipSetup` only when the
+existing P5 cluster is healthy and you want to recapture the later steps.
+
 ### Confirming It Finished
 
 `docker compose up -d` returns as soon as the containers start. PostgreSQL then runs
@@ -243,8 +276,11 @@ bash scripts/verify.sh          # macOS / Linux / WSL / Git Bash
 ```
 
 It checks container state, PostgreSQL readiness, that all 21 tables and the exclusion
-constraint exist, that seed row counts match, and that MongoDB responds to an
-authenticated ping when it is running. Exit code `0` means the environment is ready.
+constraint exist, that seed row counts match, that MongoDB responds to an authenticated ping
+when it is running, and that the committed P4/P5 report, config and evidence files are
+present. It does not require the P5 replication containers to be running; P5 has its own
+lifecycle and the primary is intentionally stopped after the failover demonstration. Exit
+code `0` means the P1–P4 environment is ready and the P4/P5 artefacts are present.
 
 ### If the Init Script Failed
 
@@ -342,3 +378,4 @@ Work is committed progressively rather than in a single final upload.
 | 26 Oct 2026 | P2 | Six business queries, seven accepted indexes with one rejected, baseline and 21-run final plans, loaded-host variance control, optimisation analysis. |
 | 27 Oct 2026 | P3 | `COMMIT`, `ROLLBACK` and `SAVEPOINT` tests; five two-session scenarios covering double-booking, exclusion, pessimistic locking, isolation levels and write skew; raw evidence capture and analysis. |
 | 28 Oct 2026 | P4 | Document model for 93,885 laboratory reports with 163,387 embedded results; `$jsonSchema` validator, six query-driven indexes, 11 validator tests, 27 consistency checks; PostgreSQL→MongoDB ETL with index rebuild; Q1–Q6 plans, `$facet`/`$lookup`, warm-run benchmark, relational comparison and raw evidence capture. |
+| 29 Oct 2026 | P5 | PostgreSQL 16 primary + hot-standby replica on an isolated Docker network; reproducible PowerShell harness and one-run evidence capture; `pg_stat_replication` streaming, write-on-primary/read-on-replica, 525 ms commit-to-visible lag under a 50,000-row burst, synchronous vs asynchronous commit comparison, captured stale read with lag-aware routing, and manual promotion with zero rows lost. |

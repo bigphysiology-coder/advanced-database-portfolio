@@ -10,6 +10,7 @@
 #   5. MongoDB accepts an authenticated connection
 #   6. the P4 collection is present with the expected counts and indexes
 #   7. the committed P4 evidence files are present
+#   8. the committed P5 report, config and evidence files are present
 #
 # Usage:
 #   pwsh scripts/verify.ps1
@@ -321,6 +322,33 @@ $p4Files = @(
 $missingFiles = @($p4Files | Where-Object { -not (Test-Path (Join-Path $repoRoot $_)) })
 if ($missingFiles.Count -eq 0) { Pass "11 P4 report and evidence files present" }
 else { Fail "missing P4 files: $($missingFiles -join ', ')" }
+
+# ----------------------------------------------------------------------------
+# 5c. Portfolio 5 artefacts
+# ----------------------------------------------------------------------------
+Section "Portfolio 5 artefacts"
+
+$p5Files = @(
+    'portfolio-5-distributed-cloud/README.md',
+    'portfolio-5-distributed-cloud/architecture.md',
+    'portfolio-5-distributed-cloud/replication-setup.ps1',
+    'portfolio-5-distributed-cloud/config/README.md',
+    'portfolio-5-distributed-cloud/config/primary.conf',
+    'portfolio-5-distributed-cloud/config/replica.conf',
+    'portfolio-5-distributed-cloud/config/pg_hba-replication.conf',
+    'portfolio-5-distributed-cloud/evidence/00-environment.txt',
+    'portfolio-5-distributed-cloud/evidence/01-setup.txt',
+    'portfolio-5-distributed-cloud/evidence/02-replication.txt',
+    'portfolio-5-distributed-cloud/evidence/03-lag.txt',
+    'portfolio-5-distributed-cloud/evidence/04-sync-vs-async.txt',
+    'portfolio-5-distributed-cloud/evidence/05-stale-read.txt',
+    'portfolio-5-distributed-cloud/evidence/06-configs.txt',
+    'portfolio-5-distributed-cloud/evidence/07-failover.txt',
+    'scripts/capture-p5.ps1'
+)
+$missingP5 = @($p5Files | Where-Object { -not (Test-Path (Join-Path $repoRoot $_)) })
+if ($missingP5.Count -eq 0) { Pass "$($p5Files.Count) P5 report, config and evidence files present" }
+else { Fail "missing P5 files: $($missingP5 -join ', ')" }
 
 # ----------------------------------------------------------------------------
 # Result

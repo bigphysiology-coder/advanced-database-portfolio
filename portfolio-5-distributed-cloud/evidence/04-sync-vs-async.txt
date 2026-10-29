@@ -1,0 +1,107 @@
+﻿=== Synchronous vs asynchronous commit latency ===
+captured: 2026-10-29 08:00:36 +01:00
+host: RASHEED-PC
+
+synchronous_commit=on alone does not make replication synchronous.
+synchronous_standby_names is what requires the standby acknowledgement.
+=== current settings: synchronous_commit is local, not replication ===
+ synchronous_commit 
+--------------------
+ on
+(1 row)
+
+ synchronous_standby_names 
+---------------------------
+ 
+(1 row)
+
+   application_name   |   state   | sync_state 
+----------------------+-----------+------------
+ portfolio-p5-replica | streaming | async
+(1 row)
+
+=== enable synchronous replication (ANY 1 of the named standby) ===
+ALTER SYSTEM
+ pg_reload_conf 
+----------------
+ t
+(1 row)
+
+   synchronous_standby_names    
+--------------------------------
+ ANY 1 ("portfolio-p5-replica")
+(1 row)
+
+   application_name   |   state   | sync_state 
+----------------------+-----------+------------
+ portfolio-p5-replica | streaming | quorum
+(1 row)
+
+=== ten commits with the standby acknowledged ===
+Timing is on.
+INSERT 0 1
+Time: 16.913 ms
+INSERT 0 1
+Time: 20.667 ms
+INSERT 0 1
+Time: 16.359 ms
+INSERT 0 1
+Time: 14.977 ms
+INSERT 0 1
+Time: 16.777 ms
+INSERT 0 1
+Time: 19.912 ms
+INSERT 0 1
+Time: 15.237 ms
+INSERT 0 1
+Time: 12.338 ms
+INSERT 0 1
+Time: 23.055 ms
+INSERT 0 1
+Time: 18.734 ms
+=== back to asynchronous replication ===
+ALTER SYSTEM
+ pg_reload_conf 
+----------------
+ t
+(1 row)
+
+ synchronous_standby_names 
+---------------------------
+ 
+(1 row)
+
+   application_name   |   state   | sync_state 
+----------------------+-----------+------------
+ portfolio-p5-replica | streaming | async
+(1 row)
+
+=== ten commits with asynchronous replication ===
+Timing is on.
+INSERT 0 1
+Time: 13.328 ms
+INSERT 0 1
+Time: 9.638 ms
+INSERT 0 1
+Time: 4.698 ms
+INSERT 0 1
+Time: 4.097 ms
+INSERT 0 1
+Time: 16.915 ms
+INSERT 0 1
+Time: 6.971 ms
+INSERT 0 1
+Time: 6.834 ms
+INSERT 0 1
+Time: 7.485 ms
+INSERT 0 1
+Time: 6.819 ms
+INSERT 0 1
+Time: 5.837 ms
+
+sync commits:  n=10 min=12.338 median=16.913 max=23.055 ms
+async commits: n=10 min=4.097 median=6.971 max=16.915 ms
+The transaction commits are single-row inserts; the timing includes client
+round trips. This is an order-of-magnitude comparison, not a benchmark.
+
+exit: 0 (elapsed 13.0s)
