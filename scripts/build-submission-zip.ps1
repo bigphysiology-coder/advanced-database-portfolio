@@ -153,7 +153,7 @@ try {
 "@
     [System.IO.File]::WriteAllText(
         $readmePath,
-        ($cover + $standaloneReadme),
+        ($cover + "`n" + $standaloneReadme),
         (New-Object System.Text.UTF8Encoding($false))
     )
 
