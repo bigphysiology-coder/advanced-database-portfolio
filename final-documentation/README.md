@@ -125,3 +125,24 @@ Git history, and can exceed the LMS upload limit for no benefit.
    LMS submission text. The assessor must see the link without opening the ZIP.
 4. Keep `final-documentation/portfolio-summary.pdf` to hand in case the LMS previews
    single files only; it is the same PDF that is inside the ZIP.
+
+## Optional Per-Section Uploads
+
+If the LMS form has a separate field for each portfolio, add `-IncludeSections`:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-submission-zip.ps1 -IncludeSections
+```
+
+That writes six additional archives under `dist/sections/`, each with the required
+`Surname_Firstname_DocumentType` name and a matching top-level folder:
+
+- `Abdulrazak_Abdulrasheed_portfolio-1-database-design.zip`
+- `Abdulrazak_Abdulrasheed_portfolio-2-query-optimisation.zip`
+- `Abdulrazak_Abdulrasheed_portfolio-3-transactions-concurrency.zip`
+- `Abdulrazak_Abdulrasheed_portfolio-4-nosql.zip`
+- `Abdulrazak_Abdulrasheed_portfolio-5-distributed-cloud.zip`
+- `Abdulrazak_Abdulrasheed_final-documentation.zip`
+
+The main ZIP already contains all six sections. Upload the section archives only if the
+form explicitly asks for them; otherwise upload the main ZIP and the separate README.

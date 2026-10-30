@@ -22,6 +22,10 @@
 #   dist/Abdulrazak_Abdulrasheed_README.md
 # ============================================================================
 
+param(
+    [switch]$IncludeSections
+)
+
 $ErrorActionPreference = 'Stop'
 
 Add-Type -AssemblyName System.IO.Compression
@@ -197,6 +201,38 @@ try {
     }
     finally {
         $zip.Dispose()
+    }
+
+    # --- optional per-section uploads ---------------------------------------
+    # Only generated on request. The main ZIP already contains every section;
+    # these exist for an LMS form that has a separate field per portfolio.
+    if ($IncludeSections) {
+        $sectionsDir = Join-Path $repoRoot 'dist/sections'
+        New-Item -ItemType Directory -Path $sectionsDir -Force | Out-Null
+        $sections = @(
+            'portfolio-1-database-design',
+            'portfolio-2-query-optimisation',
+            'portfolio-3-transactions-concurrency',
+            'portfolio-4-nosql',
+            'portfolio-5-distributed-cloud',
+            'final-documentation'
+        )
+
+        Write-Host ""
+        Write-Host "Section archives:"
+        foreach ($section in $sections) {
+            $sectionSlug = "Abdulrazak_Abdulrasheed_$section"
+            $sectionZip = Join-Path $sectionsDir "$sectionSlug.zip"
+            if (Test-Path $sectionZip) { Remove-Item $sectionZip -Force }
+
+            git archive --format=zip --prefix="$sectionSlug/" -o $sectionZip HEAD $section
+            if ($LASTEXITCODE -ne 0 -or -not (Test-Path $sectionZip)) {
+                throw "git archive failed to write $sectionZip"
+            }
+
+            $sectionSize = [math]::Round((Get-Item $sectionZip).Length / 1MB, 2)
+            Write-Host ("  {0} ({1} MB)" -f $sectionZip, $sectionSize)
+        }
     }
 }
 finally {
