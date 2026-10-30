@@ -86,31 +86,42 @@ pages before uploading it.
 
 ## Building the LMS Submission ZIP
 
-The LMS submission is a single ZIP, built from the committed tree so it matches the
-public GitHub commit:
+The LMS submission has two generated uploads:
+
+| Artifact | Path | LMS field |
+|---|---|---|
+| Main ZIP | `dist/Abdulrazak_Abdulrasheed_301926758.zip` | first upload field |
+| Separate README | `dist/Abdulrazak_Abdulrasheed_README.md` | README upload field |
+
+Build both from the committed tree:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-submission-zip.ps1
 ```
 
-It writes `dist/Abdulrazak_Abdulrasheed_301926758.zip`, with every file under the
-matching `Abdulrazak_Abdulrasheed_301926758/` folder. This is the LMS-required
-`Surname_Firstname_StudentID.zip` format. `git archive` includes only tracked files, so
-the package automatically excludes:
+The ZIP contains every file under the matching `Abdulrazak_Abdulrasheed_301926758/`
+folder. Inside the ZIP, the generic root `README.md` is renamed to
+`Abdulrazak_Abdulrasheed_README.md`, and the one relative link to it (from the P4
+report) is patched to the new name. The standalone README has the same content but
+rewrites relative links to absolute GitHub URLs, so it still works when opened on its
+own. `git archive` includes only tracked files, so the package automatically excludes:
 
 - `.git/` — the history is on GitHub, not in the upload;
 - `portfolio-4-nosql/data/` — 93 MB of regenerable NDJSON export;
 - `node_modules/`, Docker volumes and `ca_material/`.
 
-The result is under 1 MB and contains `final-documentation/portfolio-summary.pdf`.
-Do not zip the working folder by hand: that adds the 93 MB export and the Git history,
-and can exceed the LMS upload limit for no benefit.
+Both artifacts are far below the 100 MB limit: the ZIP is under 1 MB and the README is
+under 20 KB. Do not zip the working folder by hand: that adds the 93 MB export and the
+Git history, and can exceed the LMS upload limit for no benefit.
 
-## Submitting the ZIP
+## Submitting the Two Files
 
-1. Upload `dist/Abdulrazak_Abdulrasheed_301926758.zip` to the LMS. The filename and the
-   top-level folder inside it must both use `Surname_Firstname_StudentID`.
-2. Paste <https://github.com/bigphysiology-coder/advanced-database-portfolio> into the
+1. Upload `dist/Abdulrazak_Abdulrasheed_301926758.zip` to the first upload field. The
+   filename and the top-level folder inside it must both use
+   `Surname_Firstname_StudentID`.
+2. Upload `dist/Abdulrazak_Abdulrasheed_README.md` to the separate README field. The
+   filename uses `Surname_Firstname_DocumentType`.
+3. Paste <https://github.com/bigphysiology-coder/advanced-database-portfolio> into the
    LMS submission text. The assessor must see the link without opening the ZIP.
-3. Keep `final-documentation/portfolio-summary.pdf` to hand in case the LMS previews
+4. Keep `final-documentation/portfolio-summary.pdf` to hand in case the LMS previews
    single files only; it is the same PDF that is inside the ZIP.

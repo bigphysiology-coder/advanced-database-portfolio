@@ -97,7 +97,7 @@ advanced-database-portfolio/
 │   ├── capture-p4.ps1         <- P4 evidence capture and document export
 │   ├── capture-p5.ps1         <- P5 replication/failover evidence capture
 │   ├── export-summary.ps1     <- Markdown summary -> 3-page A4 PDF
-│   ├── build-submission-zip.ps1 <- committed tree -> clean LMS ZIP
+│   ├── build-submission-zip.ps1 <- committed tree -> LMS ZIP + separate README
 │   └── puppeteer.json         <- renderer config (uses system Chrome, no Chromium download)
 ├── portfolio-1-database-design/
 │   ├── schema.sql                     <- DDL: 21 relations, keys, constraints, triggers
