@@ -337,8 +337,9 @@ the summary to a 2-3 page A4 PDF; remove stale private-repository text."
 
 **Output used:** `final-documentation/portfolio-summary.md`, `reflection.md`,
 `README.md` and `portfolio-summary.pdf`; `scripts/export-summary.ps1`;
-`scripts/build-submission-zip.ps1`; and the final-documentation checks in
-`scripts/verify.ps1` and `scripts/verify.sh`.
+`scripts/build-submission-zip.ps1` and the generated
+`Abdulrazak_Abdulrasheed_README.md`; the optional per-section archives; and the
+final-documentation checks in `scripts/verify.ps1` and `scripts/verify.sh`.
 
 **Verification performed:** every number in the summary was checked against the
 P1-P5 READMEs and raw evidence (P2 `after.txt`, P3 `summary.csv`, P4 evidence
@@ -352,7 +353,11 @@ and declaration date are recorded at the end of this file.
 keep-with-next rule was added. The export initially invoked Chrome with `&`,
 which returned before the PDF was written; it now uses `Start-Process -Wait`. A
 duplicated "private repository" note and the stale publishing instructions were
-replaced with the actual public URL.
+replaced with the actual public URL. The first submission archive used a generic
+repository name; it was rebuilt as
+`Abdulrazak_Abdulrasheed_301926758.zip` with the same name on the internal root
+folder, and the root README was renamed to
+`Abdulrazak_Abdulrasheed_README.md` inside the archive to match the LMS format.
 
 **Rejected / not used:** embedding cropped screenshots to fill space — the summary
 cites raw evidence by path; padding the summary with every table in the schema —
