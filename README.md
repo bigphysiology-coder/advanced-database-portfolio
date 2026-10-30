@@ -72,7 +72,7 @@ Relevant because the repository is public.
 | 3 | Transactions and Concurrency | 7 | [`portfolio-3-transactions-concurrency/`](portfolio-3-transactions-concurrency/) | complete |
 | 4 | NoSQL and Advanced Data Models | 7 | [`portfolio-4-nosql/`](portfolio-4-nosql/) | complete |
 | 5 | Distributed and Cloud Database | 6 | [`portfolio-5-distributed-cloud/`](portfolio-5-distributed-cloud/) | complete |
-| — | Final Documentation and Reflection | 6 | [`final-documentation/`](final-documentation/) | _pending_ |
+| — | Final Documentation and Reflection | 6 | [`final-documentation/`](final-documentation/) | complete |
 
 ---
 
