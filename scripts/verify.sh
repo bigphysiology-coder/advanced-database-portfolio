@@ -246,6 +246,31 @@ for file in \
 done
 if [ -z "$missing_p5" ]; then pass "16 P5 report, config and evidence files present"; else fail "missing P5 files:$missing_p5"; fi
 
+section "Final documentation"
+missing_final=""
+for file in \
+    final-documentation/README.md \
+    final-documentation/portfolio-summary.md \
+    final-documentation/portfolio-summary.pdf \
+    final-documentation/reflection.md \
+    docs/ai-use-declaration.md \
+    scripts/export-summary.ps1; do
+    [ -f "$file" ] || missing_final="$missing_final $file"
+done
+if [ -z "$missing_final" ]; then pass "6 final-documentation files present"; else fail "missing final-documentation files:$missing_final"; fi
+
+placeholder=""
+for file in README.md final-documentation/portfolio-summary.md docs/ai-use-declaration.md; do
+    if grep -q '\[insert before submission\]' "$file" 2>/dev/null; then
+        placeholder="$placeholder $file"
+    fi
+done
+if [ -z "$placeholder" ]; then
+    pass "matriculation number present in submission files"
+else
+    printf '  WARN  matriculation number placeholder remains in:%s\n' "$placeholder"
+fi
+
 section "Result"
 if [ "$FAILURES" -eq 0 ]; then
     printf '  All checks passed. The database is seeded and ready.\n'

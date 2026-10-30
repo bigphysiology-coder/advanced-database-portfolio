@@ -12,7 +12,7 @@ This file is maintained as work progresses. It is not reconstructed at submissio
 
 | Tool | Version / model | Period of use |
 |---|---|---|
-| OpenCode (AI coding agent) | DeepSeek V4.1 Flash Free | 25-29 October 2026 |
+| OpenCode (AI coding agent) | DeepSeek V4.1 Flash Free | 25-30 October 2026 |
 
 ---
 
@@ -322,12 +322,50 @@ quoted; the report uses only the final clean capture.
 
 ---
 
+### Entry 7 — 29-30 October 2026 — Final portfolio summary and reflection
+
+**Tool:** OpenCode, model DeepSeek V4.1 Flash Free.
+
+**Task:** draft the 2-3 page LMS summary, the individual reflection, and a
+reproducible Markdown-to-PDF export; reconcile the repository's public-visibility
+note; and add final-documentation checks to the verifier.
+
+**Prompt (summarised):** "Write a 900-1,300 word summary covering the case study
+and P1-P5, leading with measured results and citing repository paths; write a
+first-person reflection with real design forks, mistakes and corrections; export
+the summary to a 2-3 page A4 PDF; remove stale private-repository text."
+
+**Output used:** `final-documentation/portfolio-summary.md`, `reflection.md`,
+`README.md` and `portfolio-summary.pdf`; `scripts/export-summary.ps1`; and the
+final-documentation checks in `scripts/verify.ps1` and `scripts/verify.sh`.
+
+**Verification performed:** every number in the summary was checked against the
+P1-P5 READMEs and raw evidence (P2 `after.txt`, P3 `summary.csv`, P4 evidence
+`00`-`07`, P5 evidence `00`-`07`). The PDF was rendered with Chrome, inspected
+page by page (3 pages), and every link was checked with an HTTP HEAD request; all
+returned 200. The GitHub API confirmed `visibility=public`. `scripts/verify.ps1`
+and `bash -n scripts/verify.sh` pass. The student's name, matriculation number
+and declaration date are recorded at the end of this file.
+
+**Corrections made:** the first PDF broke section 4 mid-paragraph; a
+keep-with-next rule was added. The export initially invoked Chrome with `&`,
+which returned before the PDF was written; it now uses `Start-Process -Wait`. A
+duplicated "private repository" note and the stale publishing instructions were
+replaced with the actual public URL.
+
+**Rejected / not used:** embedding cropped screenshots to fill space — the summary
+cites raw evidence by path; padding the summary with every table in the schema —
+the P1 section keeps only the decisions that mattered.
+
+---
+
 ## Declaration
 
 I confirm that the database implementations, scripts, analysis and conclusions submitted
 in this portfolio represent my own work. Where AI tools were used, the use is recorded
 above and I can explain and defend every part of the submitted work.
 
-**Name:**
-**Student number:**
-**Signature / date:**
+**Name:** Abdulrasheed Abdulrazak
+**Matriculation number:** 2026/A/MIT/0734
+**Student ID:** 301926758
+**Signature / date:** Abdulrasheed Abdulrazak (typed) — 30 October 2026

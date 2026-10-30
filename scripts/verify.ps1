@@ -351,6 +351,33 @@ if ($missingP5.Count -eq 0) { Pass "$($p5Files.Count) P5 report, config and evid
 else { Fail "missing P5 files: $($missingP5 -join ', ')" }
 
 # ----------------------------------------------------------------------------
+# 5d. Final documentation
+# ----------------------------------------------------------------------------
+Section "Final documentation"
+
+$finalFiles = @(
+    'final-documentation/README.md',
+    'final-documentation/portfolio-summary.md',
+    'final-documentation/portfolio-summary.pdf',
+    'final-documentation/reflection.md',
+    'docs/ai-use-declaration.md',
+    'scripts/export-summary.ps1'
+)
+$missingFinal = @($finalFiles | Where-Object { -not (Test-Path (Join-Path $repoRoot $_)) })
+if ($missingFinal.Count -eq 0) { Pass "$($finalFiles.Count) final-documentation files present" }
+else { Fail "missing final-documentation files: $($missingFinal -join ', ')" }
+
+$placeholderFiles = @(
+    'README.md',
+    'final-documentation/portfolio-summary.md',
+    'docs/ai-use-declaration.md'
+) | Where-Object {
+    (Get-Content -Raw (Join-Path $repoRoot $_)) -match '\[insert before submission\]'
+}
+if ($placeholderFiles.Count -eq 0) { Pass "matriculation number present in submission files" }
+else { Warn "matriculation number placeholder remains in: $($placeholderFiles -join ', ')" }
+
+# ----------------------------------------------------------------------------
 # Result
 # ----------------------------------------------------------------------------
 Section "Result"
