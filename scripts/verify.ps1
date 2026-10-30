@@ -361,7 +361,8 @@ $finalFiles = @(
     'final-documentation/portfolio-summary.pdf',
     'final-documentation/reflection.md',
     'docs/ai-use-declaration.md',
-    'scripts/export-summary.ps1'
+    'scripts/export-summary.ps1',
+    'scripts/build-submission-zip.ps1'
 )
 $missingFinal = @($finalFiles | Where-Object { -not (Test-Path (Join-Path $repoRoot $_)) })
 if ($missingFinal.Count -eq 0) { Pass "$($finalFiles.Count) final-documentation files present" }

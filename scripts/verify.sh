@@ -254,10 +254,11 @@ for file in \
     final-documentation/portfolio-summary.pdf \
     final-documentation/reflection.md \
     docs/ai-use-declaration.md \
-    scripts/export-summary.ps1; do
+    scripts/export-summary.ps1 \
+    scripts/build-submission-zip.ps1; do
     [ -f "$file" ] || missing_final="$missing_final $file"
 done
-if [ -z "$missing_final" ]; then pass "6 final-documentation files present"; else fail "missing final-documentation files:$missing_final"; fi
+if [ -z "$missing_final" ]; then pass "7 final-documentation files present"; else fail "missing final-documentation files:$missing_final"; fi
 
 placeholder=""
 for file in README.md final-documentation/portfolio-summary.md docs/ai-use-declaration.md; do

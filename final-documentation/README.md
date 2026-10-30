@@ -13,7 +13,7 @@ you understood the work or merely produced it.
 
 | Item | Where | Marks live in |
 |---|---|---|
-| 2–3 page portfolio summary | `portfolio-summary.md` → exported PDF → LMS | Description of all five activities |
+| 2–3 page portfolio summary | `portfolio-summary.pdf`, inside the LMS ZIP | Description of all five activities |
 | GitHub link | in the LMS submission text | Repository accessibility |
 | Evidence | committed across all five folders | Screenshots, plans, outputs |
 | Individual reflection | `reflection.md` | `3` marks under "technical reflection" |
@@ -27,11 +27,15 @@ you understood the work or merely produced it.
 - [x] Repository properly organised
 - [x] Practical work and supporting evidence included
 - [x] README/documentation explains the work
-- [ ] Required files submitted through LMS (summary PDF and repository link)
+- [x] Required files included in the LMS submission package (ZIP contains the summary PDF; repository link goes in the submission text)
 - [x] GitHub link works and is accessible to the assessor (public repository)
 - [x] Sources, datasets and libraries referenced
 - [x] AI use declared
 - [x] Individual reflection included
+
+The LMS package is a ZIP built from the committed tree, so this checklist can be
+completed before the external upload. The two actions that happen in the LMS itself
+are listed under [Submitting the ZIP](#submitting-the-zip).
 
 ## Two Things Easy to Forget
 
@@ -79,3 +83,32 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/export-summary.ps1
 The script renders `portfolio-summary.md` to A4 PDF with Chrome or Edge and writes
 `final-documentation/portfolio-summary.pdf`. Open the PDF and confirm it is 2–3
 pages before uploading it.
+
+## Building the LMS Submission ZIP
+
+The LMS submission is a single ZIP, built from the committed tree so it matches the
+public GitHub commit:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-submission-zip.ps1
+```
+
+It writes `dist/advanced-database-portfolio-submission.zip`, with every file under an
+`advanced-database-portfolio/` folder. `git archive` includes only tracked files, so the
+package automatically excludes:
+
+- `.git/` — the history is on GitHub, not in the upload;
+- `portfolio-4-nosql/data/` — 93 MB of regenerable NDJSON export;
+- `node_modules/`, Docker volumes and `ca_material/`.
+
+The result is under 1 MB and contains `final-documentation/portfolio-summary.pdf`.
+Do not zip the working folder by hand: that adds the 93 MB export and the Git history,
+and can exceed the LMS upload limit for no benefit.
+
+## Submitting the ZIP
+
+1. Upload `dist/advanced-database-portfolio-submission.zip` to the LMS.
+2. Paste <https://github.com/bigphysiology-coder/advanced-database-portfolio> into the
+   LMS submission text. The assessor must see the link without opening the ZIP.
+3. Keep `final-documentation/portfolio-summary.pdf` to hand in case the LMS previews
+   single files only; it is the same PDF that is inside the ZIP.

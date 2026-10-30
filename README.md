@@ -96,6 +96,8 @@ advanced-database-portfolio/
 │   ├── load-p4.ps1            <- P4 PostgreSQL export -> MongoDB load/transform
 │   ├── capture-p4.ps1         <- P4 evidence capture and document export
 │   ├── capture-p5.ps1         <- P5 replication/failover evidence capture
+│   ├── export-summary.ps1     <- Markdown summary -> 3-page A4 PDF
+│   ├── build-submission-zip.ps1 <- committed tree -> clean LMS ZIP
 │   └── puppeteer.json         <- renderer config (uses system Chrome, no Chromium download)
 ├── portfolio-1-database-design/
 │   ├── schema.sql                     <- DDL: 21 relations, keys, constraints, triggers

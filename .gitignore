@@ -31,5 +31,8 @@ portfolio-4-nosql/data/
 *.tmp
 tmp/
 
+# Generated LMS submission package
+dist/
+
 # Course material downloaded for reference; not part of the submitted work
 ca_material/

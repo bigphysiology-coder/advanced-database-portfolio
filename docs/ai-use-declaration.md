@@ -336,8 +336,9 @@ first-person reflection with real design forks, mistakes and corrections; export
 the summary to a 2-3 page A4 PDF; remove stale private-repository text."
 
 **Output used:** `final-documentation/portfolio-summary.md`, `reflection.md`,
-`README.md` and `portfolio-summary.pdf`; `scripts/export-summary.ps1`; and the
-final-documentation checks in `scripts/verify.ps1` and `scripts/verify.sh`.
+`README.md` and `portfolio-summary.pdf`; `scripts/export-summary.ps1`;
+`scripts/build-submission-zip.ps1`; and the final-documentation checks in
+`scripts/verify.ps1` and `scripts/verify.sh`.
 
 **Verification performed:** every number in the summary was checked against the
 P1-P5 READMEs and raw evidence (P2 `after.txt`, P3 `summary.csv`, P4 evidence
