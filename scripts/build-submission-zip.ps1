@@ -12,13 +12,17 @@
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-submission-zip.ps1
 #
 # Output:
-#   dist/advanced-database-portfolio-submission.zip
+#   dist/Abdulrazak_Abdulrasheed_301926758.zip
+#
+# The LMS form requires Surname_Firstname_StudentID.zip, with the same name on
+# the top-level folder inside the archive:
+#   Abdulrazak_Abdulrasheed_301926758/
 # ============================================================================
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$zipPath = Join-Path $repoRoot 'dist/advanced-database-portfolio-submission.zip'
-$prefix = 'advanced-database-portfolio/'
+$zipPath = Join-Path $repoRoot 'dist/Abdulrazak_Abdulrasheed_301926758.zip'
+$prefix = 'Abdulrazak_Abdulrasheed_301926758/'
 
 Push-Location $repoRoot
 try {

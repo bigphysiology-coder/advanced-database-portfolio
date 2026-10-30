@@ -93,9 +93,10 @@ public GitHub commit:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-submission-zip.ps1
 ```
 
-It writes `dist/advanced-database-portfolio-submission.zip`, with every file under an
-`advanced-database-portfolio/` folder. `git archive` includes only tracked files, so the
-package automatically excludes:
+It writes `dist/Abdulrazak_Abdulrasheed_301926758.zip`, with every file under the
+matching `Abdulrazak_Abdulrasheed_301926758/` folder. This is the LMS-required
+`Surname_Firstname_StudentID.zip` format. `git archive` includes only tracked files, so
+the package automatically excludes:
 
 - `.git/` — the history is on GitHub, not in the upload;
 - `portfolio-4-nosql/data/` — 93 MB of regenerable NDJSON export;
@@ -107,7 +108,8 @@ and can exceed the LMS upload limit for no benefit.
 
 ## Submitting the ZIP
 
-1. Upload `dist/advanced-database-portfolio-submission.zip` to the LMS.
+1. Upload `dist/Abdulrazak_Abdulrasheed_301926758.zip` to the LMS. The filename and the
+   top-level folder inside it must both use `Surname_Firstname_StudentID`.
 2. Paste <https://github.com/bigphysiology-coder/advanced-database-portfolio> into the
    LMS submission text. The assessor must see the link without opening the ZIP.
 3. Keep `final-documentation/portfolio-summary.pdf` to hand in case the LMS previews
