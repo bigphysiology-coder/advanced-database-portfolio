@@ -24,6 +24,9 @@
 
 $ErrorActionPreference = 'Stop'
 
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $studentSlug = 'Abdulrazak_Abdulrasheed_301926758'
 $studentReadmeName = 'Abdulrazak_Abdulrasheed_README.md'
@@ -81,8 +84,6 @@ try {
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $zipPath)) {
         throw "git archive failed to write $zipPath"
     }
-
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
 
     # --- rename the root README inside the ZIP ------------------------------
     # The repository keeps README.md so GitHub renders the landing page. The
